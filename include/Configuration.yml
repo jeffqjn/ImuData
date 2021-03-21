@@ -1,0 +1,25 @@
+Gyro-scale-factor: 0.00046875
+Gyro-bias: 0.0009375
+Gyro-walking-bias: 0
+Acc-scale-factor: 0.005
+Acc-bias: 0.01
+Acc-walking-bias: 0
+start_compute_time: 1557924740.05 #1557924809.3 #1557924784.3  # 1557924854.9
+end_compute_time: 1557924742.332916
+ICP_Iterations: 3
+
+rho: 0.0361421
+phi: 1.5708
+theta: 1.5708
+horizontal_angle_uncertainty: 0.1
+vertical_angle_uncertainty: 0.1
+
+NED_Velocity_NC_N: 0.05252628
+NED_Velocity_NC_E: 0.05252649
+NED_Velocity_NC_D: 0.05139978
+
+LLH_NC_L1: 0.12545329
+LLH_NC_L2: 0.12583551
+LLH_NC_H: 0.15416405
+# general
+Bag_Path: "/home/jeffqjn/Downloads/erg.bag"
