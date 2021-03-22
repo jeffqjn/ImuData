@@ -21,5 +21,12 @@ NED_Velocity_NC_D: 0.05139978
 LLH_NC_L1: 0.12545329
 LLH_NC_L2: 0.12583551
 LLH_NC_H: 0.15416405
+
+topics:
+  - "/ground_truth"
+  - "/tf_static"
+  - "/imu/data"
+  - "/velodyne_points"
+
 # general
 Bag_Path: "/home/jeffqjn/Downloads/erg.bag"

@@ -120,42 +120,42 @@ void LiDAR_PointCloud::add_pointcloud(sensor_msgs::PointCloud2ConstPtr m, Parame
 //    }
 //}
 
-bool LiDAR_PointCloud::compare_pc(pcl::PointCloud<pcl::PointXYZ>::Ptr pc1, pcl::PointCloud<pcl::PointXYZ>::Ptr pc2, int Iteration) {
-//The ICP algorithm
-pcl::console::TicToc time;
-pcl::PointCloud<pcl::PointXYZ> temp1;
-pcl::PointCloud<pcl::PointXYZ> temp2;
-Eigen::Matrix4d transformation_matrix = Eigen::Matrix4d::Identity ();
-Eigen::Matrix4d round_transformation_matrix = Eigen::Matrix4d::Identity ();
-temp1=*pc1;
-temp2=*pc2;
-//time.tic();
-pcl::IterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
-icp.setMaximumIterations(Iteration);
-icp.setInputSource(temp1.makeShared());
-icp.setInputTarget(temp2.makeShared());
-icp.align(temp1);
-icp.setMaximumIterations(1);
-//cout << "Applied " << 5 << " ICP iteration(s) in " << time.toc () << " ms" <<endl;
-
-if (icp.hasConverged())
-{
-    transformation_matrix = icp.getFinalTransformation ().cast<double>();
-    //set precision
-    round_transformation_matrix=transformation_matrix_round(transformation_matrix);
-    if(round_transformation_matrix.isIdentity())
-    {
-        return true;
-    }
-    return false;
-
-}
-else
-{
-    PCL_ERROR ("\nICP has not converged.\n");
-    return false;
-}
-}
+//bool LiDAR_PointCloud::compare_pc(pcl::PointCloud<pcl::PointXYZ>::Ptr pc1, pcl::PointCloud<pcl::PointXYZ>::Ptr pc2, int Iteration) {
+////The ICP algorithm
+//pcl::console::TicToc time;
+//pcl::PointCloud<pcl::PointXYZ> temp1;
+//pcl::PointCloud<pcl::PointXYZ> temp2;
+//Eigen::Matrix4d transformation_matrix = Eigen::Matrix4d::Identity ();
+//Eigen::Matrix4d round_transformation_matrix = Eigen::Matrix4d::Identity ();
+//temp1=*pc1;
+//temp2=*pc2;
+////time.tic();
+//pcl::IterativeClosestPoint<pcl::PointXYZ,pcl::PointXYZ> icp;
+//icp.setMaximumIterations(Iteration);
+//icp.setInputSource(temp1.makeShared());
+//icp.setInputTarget(temp2.makeShared());
+//icp.align(temp1);
+//icp.setMaximumIterations(1);
+////cout << "Applied " << 5 << " ICP iteration(s) in " << time.toc () << " ms" <<endl;
+//
+//if (icp.hasConverged())
+//{
+//    transformation_matrix = icp.getFinalTransformation ().cast<double>();
+//    //set precision
+//    round_transformation_matrix=transformation_matrix_round(transformation_matrix);
+//    if(round_transformation_matrix.isIdentity())
+//    {
+//        return true;
+//    }
+//    return false;
+//
+//}
+//else
+//{
+//    PCL_ERROR ("\nICP has not converged.\n");
+//    return false;
+//}
+//}
 
 //
 // Created by noah on 25.01.21.

@@ -33,6 +33,8 @@ void load_from_config(Parameters & parameters)
     parameters.set_NED_Velocity_uncertainty(config["NED_Velocity_NC_N"].as<double>(),config["NED_Velocity_NC_E"].as<double>(),config["NED_Velocity_NC_D"].as<double>());
     //LLH Uncertainty
     parameters.set_LLH_uncertainty(config["LLH_NC_L1"].as<double>(),config["LLH_NC_L2"].as<double>(),config["LLH_NC_H"].as<double>());
+    //Topics
+    parameters.load_topics(config["topics"].as<vector<string>>());
 }
 
 

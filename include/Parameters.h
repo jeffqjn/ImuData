@@ -2,6 +2,8 @@
 // Created by noah on 27.02.21.
 //
 #include <iostream>
+#include <vector>
+#include <yaml.h>
 
 using namespace std;
 #ifndef IMUDATA_PARAMETERS_H
@@ -32,6 +34,7 @@ private:
     double Height_uc;
     double bag_start_time;
     double bag_end_time;
+    vector<string> topics;
 public:
     void set_GYRO_SCALE_FACTOR(double value);
     void set_GYRO_BIAS(double value);
@@ -65,5 +68,7 @@ public:
     void get_NED_Velocity_uncertainty(double &N, double &E, double &D);
     void get_LLH_uncertainty(double & latitude, double & longitude, double & height);
     void get_bag_start_end_time(double &s_time, double &e_time);
+    void load_topics(vector<string> topics);
+    void get_topics(vector<string> &t);
 };
 #endif //IMUDATA_PARAMETERS_H

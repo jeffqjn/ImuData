@@ -37,7 +37,7 @@ public:
     LiDAR_PointCloud(double leading_diagonal_threshold, double sub_diagonal_threshold, double tranlation_threshold);
     void add_pointcloud(sensor_msgs::PointCloud2ConstPtr m, Parameters parameters,KdTree &kdTree,int argc, char** argv);
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_convert(const boost::shared_ptr<const sensor_msgs::PointCloud2> & input);
-    bool compare_pc(pcl::PointCloud<pcl::PointXYZ>::Ptr pc1, pcl::PointCloud<pcl::PointXYZ>::Ptr pc2, int Iteration);
+    //bool compare_pc(pcl::PointCloud<pcl::PointXYZ>::Ptr pc1, pcl::PointCloud<pcl::PointXYZ>::Ptr pc2, int Iteration);
     Eigen::Matrix4d transformation_matrix_round(Eigen::Matrix4d transformation_matrix);
 
     void show_pointcloud(int argc, char ** argv);

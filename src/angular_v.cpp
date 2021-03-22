@@ -78,7 +78,7 @@ int main(int argc, char ** argv)
 
     //TODO topics write in yaml and reading by parameter
     vector<string> topics;
-
+    parameters.get_topics(topics);
     vector<pair<Interval,Eigen::Matrix4d>> tf2imu;
     vector<geometry_msgs::PoseStamped> ground_truth;
     vector<pair<geometry_msgs::TransformStamped,geometry_msgs::TransformStamped>> tf_static;
@@ -98,13 +98,7 @@ int main(int argc, char ** argv)
     vector<pair<Eigen::Vector3d,Eigen::Vector3d>> est_pos;
     geometry_msgs::TransformStamped end;
     geometry_msgs::Vector3 from_beginning_to_end_translation;
-    topics.emplace_back("/ground_truth");
-    topics.emplace_back("/tf_static");
-    topics.emplace_back("/imu/data");
-    topics.emplace_back("/velodyne_points");
-    topics.emplace_back("/estimation_filter/NED_Velocity");
-    topics.emplace_back("/estimation_filter/quaternion");
-    topics.emplace_back("/estimation_filter/Latitude");
+
     rosbag::View view(bag,rosbag::TopicQuery(topics));
     parameters.set_bag_start_end_time(view.getBeginTime().toSec(),view.getEndTime().toSec());
 

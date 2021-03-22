@@ -131,7 +131,17 @@ void Parameters::get_bag_start_end_time(double &s_time, double &e_time)
     s_time=this->bag_start_time;
     e_time=this->bag_end_time;
 }
-
+void Parameters::load_topics(vector<string> topics)
+{
+    this->topics=topics;
+}
+void Parameters::get_topics(vector<string> &t)
+{
+    for( auto item: topics)
+    {
+        t.emplace_back(item);
+    }
+}
 //
 // Created by noah on 23.01.21.
 //
