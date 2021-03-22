@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <yaml.h>
+#include <rosbag/bag.h>
 
 using namespace std;
 #ifndef IMUDATA_PARAMETERS_H
@@ -70,5 +71,7 @@ public:
     void get_bag_start_end_time(double &s_time, double &e_time);
     void load_topics(vector<string> topics);
     void get_topics(vector<string> &t);
+
+    bool if_in_time_period(rosbag::MessageInstance const  m);
 };
 #endif //IMUDATA_PARAMETERS_H

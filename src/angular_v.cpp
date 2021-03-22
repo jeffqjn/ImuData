@@ -56,8 +56,25 @@ for(int i=0;i<727379967;i++)
 }
     end= curTime();
 cout<<end-start<<endl;
-
 }
+
+bool if_ground_truth(rosbag::MessageInstance const & m)
+{
+    return m.getTopic()=="/ground_truth";
+}
+bool if_tf_static(rosbag::MessageInstance const & m)
+{
+    return m.getTopic()=="/tf_static";
+}
+bool if_imu_data(rosbag::MessageInstance const & m)
+{
+    return m.getTopic()=="/imu/data";
+}
+bool if_velodyne_points(rosbag::MessageInstance const & m)
+{
+    return m.getTopic()=="/velodyne_points";
+}
+
 int main(int argc, char ** argv)
 {
     //Instanziieren
@@ -76,9 +93,10 @@ int main(int argc, char ** argv)
     //open rosbag
     bag.open(parameters.get_Bag_Path());
 
-    //TODO topics write in yaml and reading by parameter
+    //get topics
     vector<string> topics;
     parameters.get_topics(topics);
+
     vector<pair<Interval,Eigen::Matrix4d>> tf2imu;
     vector<geometry_msgs::PoseStamped> ground_truth;
     vector<pair<geometry_msgs::TransformStamped,geometry_msgs::TransformStamped>> tf_static;
@@ -107,24 +125,22 @@ int main(int argc, char ** argv)
 
     BOOST_FOREACH( rosbag::MessageInstance const  m, view)
     {
-            //TODO use function to substitute the if
-            if (m.getTime().toSec()>(start_time-1) && m.getTime().toSec()<(end_time+1))
+            if (parameters.if_in_time_period(m))
             {
-                if (m.getTopic()=="/ground_truth")
+                if (if_ground_truth(m))
                 {
                     measurement.add_ground_truth(m.instantiate<geometry_msgs::PoseStamped>(),parameters);
                 }
-                else if (m.getTopic()=="/tf_static" && !static_data_aqcuired)
+                else if (if_tf_static(m) && !static_data_aqcuired)
                 {
                     measurement.add_tf_static(m,static_data_aqcuired);
                 }
-                else if (m.getTopic()=="/imu/data")
+                else if (if_imu_data(m))
                 {
                     imu.add_vel_measurement(m.instantiate<sensor_msgs::Imu>(),parameters);
                     if(get_two)
                     {
-                        //TODO use function to substitute the if
-                        if(points.pointclouds.size()==2)
+                        if(points.data_exist())
                         {
                             //TODO change the function and variable name
                             vector<pair<Eigen::Vector3d, Eigen::Vector3d>> temp = PF.particle_filter_set_up(
@@ -135,7 +151,7 @@ int main(int argc, char ** argv)
                         }
                     }
                 }
-                else if (m.getTopic()=="/velodyne_points")
+                else if (if_velodyne_points(m))
                 {
                     points.add_pointcloud(m.instantiate<sensor_msgs::PointCloud2>(),parameters,kd,argc,argv);
                     if(++index%2==0)

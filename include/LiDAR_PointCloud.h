@@ -17,6 +17,7 @@
 #include "KdTree.h"
 #include <ibex.h>
 #include <ros/ros.h>
+#include <thread>
 #include "FloorSegment.h"
 
 using namespace std;
@@ -27,20 +28,24 @@ class LiDAR_PointCloud
 {
 public:
     vector<pair<double,pcl::PointCloud<pcl::PointXYZ>>> pointclouds;
+    vector<pair<double,vector<int>>> labels;
     vector<pair<double,vector<IntervalVector>>> pointclouds_Interval;
     vector<ros::Time> velocity_0;
     Eigen::Matrix4d threshold_matrix= Eigen::Matrix4d::Identity ();
     Eigen::Matrix4d Template;
     pcl::PointCloud<pcl::PointXYZRGB> ground;
 
+
+
 public:
     LiDAR_PointCloud(double leading_diagonal_threshold, double sub_diagonal_threshold, double tranlation_threshold);
     void add_pointcloud(sensor_msgs::PointCloud2ConstPtr m, Parameters parameters,KdTree &kdTree,int argc, char** argv);
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_convert(const boost::shared_ptr<const sensor_msgs::PointCloud2> & input);
     //bool compare_pc(pcl::PointCloud<pcl::PointXYZ>::Ptr pc1, pcl::PointCloud<pcl::PointXYZ>::Ptr pc2, int Iteration);
-    Eigen::Matrix4d transformation_matrix_round(Eigen::Matrix4d transformation_matrix);
-
+    //Eigen::Matrix4d transformation_matrix_round(Eigen::Matrix4d transformation_matrix);
+    bool data_exist();
     void show_pointcloud(int argc, char ** argv);
-
-};
+    void pointxyz2pointxyzi(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pc2,pcl::PointCloud<pcl::PointXYZI> &temp);
+    void get_label(sensor_msgs::PointCloud2ConstPtr m,pcl::PointCloud<pcl::PointXYZI> &temp);
+    };
 #endif //IMUDATA_LIDAR_POINTCLOUD_H

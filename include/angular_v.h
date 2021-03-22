@@ -54,6 +54,11 @@ static void toEulerAngle(const Eigen::Quaterniond & q, double & roll, double & p
 double double_round(double dVal, int iPlaces);
 void load_from_config(Parameters & parameters);
 
+bool if_ground_truth(rosbag::MessageInstance const & m);
+bool if_tf_static(rosbag::MessageInstance const & m);
+bool if_imu_data(rosbag::MessageInstance const & m);
+bool if_velodyne_points(rosbag::MessageInstance const & m);
+
 
 
 

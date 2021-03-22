@@ -142,6 +142,10 @@ void Parameters::get_topics(vector<string> &t)
         t.emplace_back(item);
     }
 }
+bool Parameters::if_in_time_period(rosbag::MessageInstance const  m)
+{
+   return m.getTime().toSec()>(get_START_COMPUTE_TIME()-1) && m.getTime().toSec()<(get_END_COMPUTE_TIME()+1);
+}
 //
 // Created by noah on 23.01.21.
 //
