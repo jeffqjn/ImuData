@@ -1,27 +1,49 @@
 #include "Particle_Filter.h"
-void Particle_Filter::show_pointcloud(int argc, char** argv)
-{
-    ros::init(argc,argv,"Pointcloud_show");
-    ros::NodeHandle nh;
-    ros::Publisher pcl_pub=nh.advertise<sensor_msgs::PointCloud2>("pcl_output",1);
-    ros::Publisher truth_pub=nh.advertise<sensor_msgs::PointCloud2>("truth_output",1);
-    sensor_msgs::PointCloud2 output1;
-    sensor_msgs::PointCloud2 output2;
-
-    pcl::toROSMsg(need_show_transformed,output1);
-    pcl::toROSMsg(need_show_truth,output2);
-    output1.header.frame_id="mms";
-    output2.header.frame_id="mms";
-    ros::Rate loop_rate(1);
-    while(ros::ok())
-    {
-       pcl_pub.publish(output1);
-       truth_pub.publish(output2);
-       ros::spinOnce();
-       loop_rate.sleep();
+void Particle_Filter::add_marker_to_array(IntervalVector point,
+                         visualization_msgs::MarkerArray &marker_array, double r, double g,
+                         double b, double a){
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "velodyne";
+    marker.header.stamp = ros::Time();
+    marker.ns = "my_namespace";
+    marker.id = marker_array.markers.size();
+    marker.type = visualization_msgs::Marker::CUBE;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = point[0].mid();
+    marker.pose.position.y = point[1].mid();
+    if(point.size()>2){
+        marker.pose.position.z = point[2].mid();
+        marker.scale.z = point[2].diam();
+    } else {
+        marker.pose.position.z = 0.0;
+        marker.scale.z = 0.0;
     }
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.x = point[0].diam();
+    marker.scale.y = point[1].diam();
+    marker.color.a = a;
+    marker.color.r = r;
+    marker.color.g = g;
+    marker.color.b = b;
+    marker_array.markers.push_back(marker);
 }
 
+void Particle_Filter::show_boxes(int argc, char** argv)
+{
+    ros::init(argc,argv,"boxes_show");
+    ros::NodeHandle nh;
+    ros::Publisher boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("boxes_output",0);
+    ros::Rate loop_rate(0.1);
+    while(ros::ok())
+    {
+        boxes_pub.publish(marker_array);
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+}
 long curTime()
 {
     std::chrono::milliseconds ms=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
@@ -94,11 +116,23 @@ void Particle_Filter::intervalCalcuateThread(pcl::PointCloud<pcl::PointXYZ> *pc,
     IntervalVector horizontal_opening_angle(3,Interval(0));
     IntervalVector vertical_opening_angle(3,Interval(0));
 
+//    Interval roh_u;
+//    Interval theta_u;
+//    Interval phi_u;
+
+//    roh_u=sqrt(pow(Interval(-0.05,0.05),2)+(Interval(-0.05,0.05),2)+(Interval(-0.015,0.015),2));
+//    theta_u=acos(Interval(-0.015,0.015)/roh_u);
+//    phi_u=atan(Interval(-0.05,0.05)/Interval(-0.05,0.05));
+//    cout<<"rho"<<roh_u<<endl;
+//    cout<<"theta"<<theta_u<<endl;
+//    cout<<"phi"<<phi_u<<endl;
     for (unsigned int i = start_index; i < end_index; ++i)
     {
         x_coordinate=pc->points[i].x;
         y_coordinate=pc->points[i].y;
         z_coordinate=pc->points[i].z;
+
+
         rho=sqrt(x_coordinate*x_coordinate+y_coordinate*y_coordinate+z_coordinate*z_coordinate);
         theta=acos(z_coordinate/rho);
         phi=atan(y_coordinate/x_coordinate);
@@ -132,10 +166,44 @@ void plot(vector<double> & distance, vector<double> sum)
     // Save the image (file format is determined by the extension)
     matplotlibcpp::show();
 }
-//TODO calculate weight  when the weight smaller than threshold delete and duplicate the max weighted particle
-//TODO ground point less weighted other greater weighted
-//TODO resampling calculate the average
-//TODO parallelism
+bool GreaterSort(Particle_Filter::particle_weighted a, Particle_Filter::particle_weighted b)
+{
+    return a.weight>b.weight;
+}
+void Particle_Filter::pointxyz2pointxyzi(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pc2,pcl::PointCloud<pcl::PointXYZI> &temp)
+{
+    for(auto item:*pc2)
+    {
+        pcl::PointXYZI temp1;
+        temp1.x=item.x;
+        temp1.y=item.y;
+        temp1.z=item.z;
+        temp.points.emplace_back(temp1);
+    }
+}
+void Particle_Filter::get_label(pcl::PointCloud<pcl::PointXYZI> &temp, vector<int> &label)
+{
+
+    floorSegmentParams params;
+    params.visualize         = false;  // show with true
+    params.r_min_square      = 0.1 * 0.1;
+    params.r_max_square      = 100 * 100;
+    params.n_bins            = 100;
+    params.n_segments        = 180;
+    params.max_dist_to_line  = 0.15;
+    params.max_slope         = 1;
+    params.max_error_square  = 0.01;
+    params.long_threshold    = 2.0;
+    params.max_long_height   = 0.1;
+    params.max_start_height  = 0.2;
+    params.sensor_height     = 1.73;
+    params.line_search_angle = 0.2;
+    params.n_threads         = 4;
+    floorSegmentation segmenter(params);
+    segmenter.segment(temp, &label);
+
+
+}
 vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_set_up(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,int argc, char ** argv){
 
     int max_index;
@@ -151,9 +219,9 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
 
     tree_after_transform.setInputCloud(pointcloud.pointclouds[1].second.makeShared());
 
+
     build_LiDAR_Interval(parameters,pointcloud);
-    cout<<pointclouds_Interval[1].second.size()<<endl;
-    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> particle=generate_particle(box_6D,4,3,3,5,5,5);//233332
+    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> particle=generate_particle(box_6D,2,3,3,3,3,2);//233332
 
     // one LiDAR Point can only matched once
     if_matched.resize(pointcloud.pointclouds[1].second.points.size(),false);
@@ -164,22 +232,47 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
     int particle_size=particle.size();
     int point_cloud_size=pointcloud.pointclouds[0].second.points.size();
 
-
-
     pcl::PointCloud<pcl::PointXYZ> estimation;
     vector<IntervalVector> estimation_interval;
 
+//    for(int num=0;num<pointclouds_Interval[1].second.size();num++)
+//    {
+//        add_marker_to_array(pointclouds_Interval[1].second[num],
+//                marker_array, 255,0,
+//                0, 0.5);
+//    }
     for(int j=0;j<particle_size;j++)
     {
 //        Ground_Truth
-        particle[j].first[0]=-0.00133664;
-        particle[j].first[1]= -0.00793514;
-        particle[j].first[2]=-0.0455487;
+//        particle[j].first[0]=3.13981;
+//        particle[j].first[1]=3.14148;
+//        particle[j].first[2]=3.14133;
+//
+//        particle[j].second[0]=-0.129968;
+//        particle[j].second[1]=-0.00358497;
+//        particle[j].second[2]=-0.0100606;
 
-        particle[j].second[0]=-0.0623499;
-        particle[j].second[1]=-0.00126607;
-        particle[j].second[2]=0.00118102;
+        particle[j].first[0]=0.00175254;
+        particle[j].first[1]=-0.000119835;
+        particle[j].first[2]=-0.00042162;
+
+        particle[j].second[0]=-0.13036;
+        particle[j].second[1]=0.0063506;
+        particle[j].second[2]=-0.00140698;
+
         transform_use_particle(pointcloud.pointclouds[0].second,particle[j].first, particle[j].second);
+
+//                for(int num=0;num<pointclouds_Interval[0].second.size();num++)
+//        {
+//            add_marker_to_array(pointclouds_Interval[0].second[num],
+//                                marker_array, 0,0,
+//                                255, 0.5);
+//        }
+        pointcloud_show(argc,argv,pointcloud.pointclouds[1].second);
+        pcl::PointCloud<pcl::PointXYZI> temp;
+        pointxyz2pointxyzi(transform_last_use_particle.makeShared(),temp);
+        get_label(temp,label);
+
         build_LiDAR_Interval(parameters,pointcloud);
 
         //parallelism
@@ -191,12 +284,12 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
               int end_index   = point_cloud_size / 8 * (i + 1);
 
             thread_vec[i] =
-                    std::thread(&Particle_Filter::particleCalcuateThread,this,&pointcloud, start_index,end_index);
+                    std::thread(&Particle_Filter::particleCalcuateThread,this,&pointcloud, start_index,end_index, &mutex);
         }
         const int left_index_start = point_cloud_size / 8*7;
         const int left_index_end   = point_cloud_size ;
         thread_vec[7] =
-                std::thread(&Particle_Filter::particleCalcuateThread,this,&pointcloud, left_index_start,left_index_end);
+                std::thread(&Particle_Filter::particleCalcuateThread,this,&pointcloud, left_index_start,left_index_end,&mutex);
 
         for (auto it = thread_vec.begin(); it != thread_vec.end(); ++it)
         {
@@ -204,27 +297,73 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
         }
 
 
-        cout<<summe<<endl;
+        //cout<<summe<<endl;
         //show_pointcloud(argc,argv);
         //DEBUG
         //sums.emplace_back(summe);
         //cout<<transform_last_use_particle.points.size()<<endl;
         cout<<count++<<endl;
-        if(summe>max_value)
-        {
-            max_value=summe;
-            max_index=j;
-        }
-        if(summe<min_value)
-        {min_value=summe;}
+//        if(summe>max_value)
+//        {
+//            max_value=summe;
+//            max_index=j;
+//        }
+//        if(summe<min_value)
+//        {min_value=summe;}
+        weights.emplace_back(particle_weighted(j,summe));
         pointclouds_Interval[0].second.clear();
+        label.clear();
         for(int l=0; l<if_matched.size();l++)
         {
             if_matched[l]= false;
         }
         summe=0.;
+        cout<<marker_array.markers.size()<<endl;
+        show_boxes(argc,argv);
 
     }
+
+    sort(weights.begin(),weights.end(),GreaterSort);
+
+    //resampling
+    int null_count=0;
+    for(int i=0;i<weights.size();i++)
+    {
+        if(weights[i].weight<parameters.get_PF_threshold())
+        {
+            weights[i].weight=-1;
+            null_count++;
+        }
+    }
+    vector<int> select{0,1,2,3,4,5,6,7,8,9,10};
+    int s=0;
+    for(int i=0;i<weights.size();i++)
+    {
+       if(weights[i].weight==-1)
+       {
+           weights[i].weight=weights[select[s++%10]].weight;
+           weights[i].index=weights[select[s++%10]].index;
+       }
+    }
+    //get average
+    Eigen::Vector3d translation;
+    Eigen::Vector3d rotation;
+    translation[0]=0;
+    translation[1]=0;
+    translation[2]=0;
+    rotation[0]=0;
+    rotation[1]=0;
+    rotation[2]=0;
+    for(auto item:weights)
+    {
+        translation+=particle[item.index].second;
+        rotation+=particle[item.index].first;
+    }
+    translation=translation/weights.size();
+    rotation=rotation/weights.size();
+    cout<<translation<<endl;
+    cout<<rotation<<endl;
+
     end= curTime();
     cout<<particle[max_index].first<<endl;
     cout<<particle[max_index].second<<endl;
@@ -256,7 +395,7 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
     return result;
 }
 
-void Particle_Filter::particleCalcuateThread(LiDAR_PointCloud *pointCloud,int start_index, int end_index)
+void Particle_Filter::particleCalcuateThread(LiDAR_PointCloud *pointCloud,int start_index, int end_index,std::mutex* mutex)
 {
     vector<int> indices;
     vector<float> distances;
@@ -265,11 +404,13 @@ void Particle_Filter::particleCalcuateThread(LiDAR_PointCloud *pointCloud,int st
         double radius = sqrt(pow(pointclouds_Interval[1].second[i][0].diam(),2)+ pow(pointclouds_Interval[1].second[i][1].diam(),2)+ pow(pointclouds_Interval[1].second[i][2].diam(),2));
         if (tree_after_transform.radiusSearch(transform_last_use_particle.points[i], radius, indices, distances) >0)
         {
-            cout<<summe<<endl;
-            summe+= calculate_weight(*pointCloud, indices,if_matched, pointclouds_Interval[1].second[i],i);
+            summe+= calculate_weight(*pointCloud, indices,if_matched, pointclouds_Interval[1].second[i],i, mutex);
             indices.clear();
             distances.clear();
         }
+        //DEBUG
+        first= true;
+        c=3;
     }
 }
 
@@ -396,14 +537,13 @@ IntervalVector Particle_Filter::create_6D_box(IMU imu, LiDAR_PointCloud pointclo
     return box_6D;
 }
 //TODO maybe through volume
-//TODO parallelism
-//TODO ground-ground match non-ground-non-ground match
-double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<int> &indices, vector<bool> &if_matched, IntervalVector & point_after_transform,int k)
+double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<int> &indices, vector<bool> &if_matched, IntervalVector & point_after_transform,int k, std::mutex* mutex)
 {
     double volume=0;
     double summe=0;
+
     for(int i=0;i<indices.size();i++) {
-        if (pointcloud.labels[0].second[k] == pointcloud.labels[1].second[indices[i]]) {
+        if (label[k] == pointcloud.labels[1].second[indices[i]]) {
             IntervalVector current = pointclouds_Interval[1].second[indices[i]];
             bool x = current[0].intersects(point_after_transform[0]);
             bool y = current[1].intersects(point_after_transform[1]);
@@ -435,13 +575,28 @@ double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<in
 //           Interval y(max(current[1].lb(),point_after_transform[1].lb()),min(current[1].ub(),point_after_transform[1].ub()));
 //           Interval z(max(current[2].lb(),point_after_transform[2].lb()),min(current[2].ub(),point_after_transform[2].ub()));
 //            volume+=abs(x.ub()-x.lb())*abs(y.ub()-y.lb())*abs(z.ub()-z.lb());
-                if(pointcloud.labels[0].second[k]==1)
+//DEBUG
+//if(d>0) {
+    if (first) {
+        mutex->lock();
+        add_marker_to_array(point_after_transform, marker_array, 0, 0, 255, 0.5);
+        mutex->unlock();
+        first = false;
+    }
+   // if (c-- != 0) {
+        mutex->lock();
+        add_marker_to_array(current, marker_array, 255, 0, 0, 0.5);
+        mutex->unlock();
+   // }
+   // d--;
+//}
+                if(label[k]==1)
                 {
-                    summe=summe+0.6;
+                    summe=summe+0.5;
                 }
                 else
                 {
-                    summe=summe+1.4;
+                    summe=summe+2;
                 }
 
                 if_matched[indices[i]] = true;
@@ -467,6 +622,7 @@ double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<in
 //        need_show_transformed.points.emplace_back(transformed);
 
     }
+
     return summe;
 }
 
@@ -516,22 +672,49 @@ IntervalVector Particle_Filter::IntervalrotationMatrixtoEulerAngle(IntervalMatri
     return temp;
 }
 
-void Particle_Filter::pointcloud_show( int argc,char **argv,pcl::PointCloud<pcl::PointXYZ> transformed, pcl::PointCloud<pcl::PointXYZ> match)
+void Particle_Filter::pointcloud_show( int argc,char **argv,pcl::PointCloud<pcl::PointXYZ> &match)
 {
-    ros::init(argc,argv,"test");
+    ros::init(argc,argv,"Pointcloud_compare");
     ros::NodeHandle nh;
-    ros::Publisher pub= nh.advertise<std_msgs::String>("output",1);
-    ros::Rate loop(1);
-    while (ros::ok())
+    ros::Publisher pcl_pub=nh.advertise<sensor_msgs::PointCloud2>("transformed_output",1);
+    ros::Publisher truth_pub=nh.advertise<sensor_msgs::PointCloud2>("truth_output",1);
+    sensor_msgs::PointCloud2 output1;
+    sensor_msgs::PointCloud2 output2;
+
+    //add points to pointcloud(truth)
+    for (int i = 0; i < match.points.size(); ++i) {
+        pcl::PointXYZRGB temp;
+        temp.x=match.points[i].x;
+        temp.y=match.points[i].y;
+        temp.z=match.points[i].z;
+        temp.r=255;
+        temp.g=0;
+        temp.b=0;
+        need_show_truth.points.emplace_back(temp);
+    }
+    //add points to pointcloud(transformed)
+    for (int i = 0; i < transform_last_use_particle.points.size(); ++i) {
+        pcl::PointXYZRGB temp;
+        temp.x=transform_last_use_particle.points[i].x;
+        temp.y=transform_last_use_particle.points[i].y;
+        temp.z=transform_last_use_particle.points[i].z;
+        temp.r=0;
+        temp.g=0;
+        temp.b=255;
+        need_show_transformed.points.emplace_back(temp);
+    }
+
+    pcl::toROSMsg(need_show_transformed,output1);
+    pcl::toROSMsg(need_show_truth,output2);
+    output1.header.frame_id="map";
+    output2.header.frame_id="map";
+    ros::Rate loop_rate(1);
+    while(ros::ok())
     {
-        std_msgs::String msg;
-        std::stringstream ss;
-        ss<<"AH";
-        msg.data=ss.str();
-        ROS_INFO("test");
-        pub.publish(msg);
+        pcl_pub.publish(output1);
+        truth_pub.publish(output2);
         ros::spinOnce();
-        loop.sleep();
+        loop_rate.sleep();
     }
 }
 //

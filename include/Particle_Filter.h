@@ -24,6 +24,9 @@
 #include "omp.h"
 #include <chrono>
 #include <thread>
+#include <algorithm>
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 #include "matplotlibcpp.h"
 using namespace std;
 using namespace ibex;
@@ -32,6 +35,17 @@ using namespace ibex;
 long curTime();
 class Particle_Filter
 {
+public:
+    struct particle_weighted
+    {
+        particle_weighted(int i, double w)
+        {
+            index=i;
+            weight=w;
+        }
+        int index;
+        double weight;
+    };
 private:
 
     pcl::PointCloud<pcl::PointXYZ> after_transform;
@@ -44,25 +58,36 @@ private:
     vector<IntervalVector> LiDARpoints;
     pcl::KdTreeFLANN<pcl::PointXYZ> tree_after_transform;
     double summe=0;
-
-
     vector<bool> if_matched;
+    vector<particle_weighted> weights;
+    visualization_msgs::MarkerArray marker_array;
+    vector<int> label;
+    int c=1;
+    int d=1000;
+    bool first=true;
 
 public:
+
+
     vector<pair<Eigen::Vector3d,Eigen::Vector3d>> particle_filter_set_up(Parameters &parameters,IMU &imu, KdTree & kd, LiDAR_PointCloud &pointcloud ,int argc, char ** argv);
     vector<pair<Eigen::Vector3d,Eigen::Vector3d>> generate_particle(IntervalVector box_6d, int num0,int num1, int num2, int num3, int num4, int num5);
     void transform_use_particle(pcl::PointCloud<pcl::PointXYZ> pointcloud, Eigen::Vector3d &angle, Eigen::Vector3d &translation);
     void transform_use_particle_Interval(vector<IntervalVector> pointcloud_interval, Eigen::Vector3d &angle, Eigen::Vector3d &translation,vector<IntervalVector> &after_transform_interval);
     Eigen::Matrix3d eulerAnglesToRotationMatrix(Eigen::Vector3d &theta);
     IntervalVector create_6D_box(IMU imu, LiDAR_PointCloud pointcloud);
-    double calculate_weight(LiDAR_PointCloud &pointcloud, vector<int> &indices, vector<bool> &if_matched, IntervalVector & point_after_transform,int k);
+    double calculate_weight(LiDAR_PointCloud &pointcloud, vector<int> &indices, vector<bool> &if_matched, IntervalVector & point_after_transform,int k,std::mutex* mutex);
     Eigen::Vector3d estimation_position(vector<pair<Eigen::Vector3d,Eigen::Vector3d>>est_pos,Eigen::Vector3d &initial_pos);
     IntervalVector IntervalrotationMatrixtoEulerAngle(IntervalMatrix & matrix);
-    void pointcloud_show( int argc,char **argv,pcl::PointCloud<pcl::PointXYZ> transformed, pcl::PointCloud<pcl::PointXYZ> match);
-    void show_pointcloud(int argc, char** argv);
+    void pointcloud_show( int argc,char **argv,pcl::PointCloud<pcl::PointXYZ> &match);
+    void show_boxes(int argc, char** argv);
     void build_LiDAR_Interval(Parameters &parameters,LiDAR_PointCloud &pointcloud);
     void intervalCalcuateThread(pcl::PointCloud<pcl::PointXYZ> *pc, int start_index, int end_index,double rho_uncertinty,double phi_uncertinty,double theta_uncertinty,double horizontal_angle_uncertainty,double vertical_angle_uncertainty,std::mutex* mutex);
-    void particleCalcuateThread(LiDAR_PointCloud *pointCloud,int start_index, int end_index);
+    void particleCalcuateThread(LiDAR_PointCloud *pointCloud,int start_index, int end_index,std::mutex* mutex);
+    void get_label(pcl::PointCloud<pcl::PointXYZI> &temp, vector<int> &label);
+    void pointxyz2pointxyzi(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pc2,pcl::PointCloud<pcl::PointXYZI> &temp);
+    void add_marker_to_array(IntervalVector point,visualization_msgs::MarkerArray &marker_array, double r, double g,
+                                              double b, double a);
+
 
 };
 

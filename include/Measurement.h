@@ -19,13 +19,14 @@ class Measurement
 public:
     vector<pair<Interval,Eigen::Matrix4d>> tf2imu;
     vector<pair<Interval,geometry_msgs::PoseStamped>> ground_truth;
-    vector<pair<geometry_msgs::TransformStamped,geometry_msgs::TransformStamped>> tf_static;
+    vector<geometry_msgs::TransformStamped> tf_static;
 public:
     void add_ground_truth (geometry_msgs::PoseStampedConstPtr m,Parameters parameters);
     void add_tf_static (rosbag::MessageInstance  m, bool & tf_data_aquired);
 
     Eigen::Matrix4d tf_mms_cam();
     Eigen::Matrix4d tf_cam_imu();
+    Eigen::Matrix4d tf_cam_velodyne();
     void transform_gt_imu(Eigen::Matrix4d tf_mms_cam, Eigen::Matrix4d tf_cam_imu, Parameters parameters);
     Eigen::Matrix4d calculate_relative_transformation_imu(Parameters parameters);
 };

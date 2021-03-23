@@ -36,6 +36,7 @@ private:
     double bag_start_time;
     double bag_end_time;
     vector<string> topics;
+    double PF_threshold;
 public:
     void set_GYRO_SCALE_FACTOR(double value);
     void set_GYRO_BIAS(double value);
@@ -65,13 +66,14 @@ public:
     double get_END_COMPUTE_TIME();
     string get_Bag_Path();
     int get_Iterations();
+    double get_PF_threshold();
     void get_LiDAR_error_model_param(double &rho, double &phi, double &theta, double &horizontal_angle_uncertainty, double &vertical_angle_uncertainty );
     void get_NED_Velocity_uncertainty(double &N, double &E, double &D);
     void get_LLH_uncertainty(double & latitude, double & longitude, double & height);
     void get_bag_start_end_time(double &s_time, double &e_time);
     void load_topics(vector<string> topics);
     void get_topics(vector<string> &t);
-
+    void set_PF_threshold(double threshold);
     bool if_in_time_period(rosbag::MessageInstance const  m);
 };
 #endif //IMUDATA_PARAMETERS_H

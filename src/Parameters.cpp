@@ -146,6 +146,14 @@ bool Parameters::if_in_time_period(rosbag::MessageInstance const  m)
 {
    return m.getTime().toSec()>(get_START_COMPUTE_TIME()-1) && m.getTime().toSec()<(get_END_COMPUTE_TIME()+1);
 }
+void Parameters::set_PF_threshold(double threshold)
+{
+    this->PF_threshold=threshold;
+}
+double Parameters::get_PF_threshold()
+{
+    return this->PF_threshold;
+}
 //
 // Created by noah on 23.01.21.
 //

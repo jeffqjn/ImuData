@@ -5,37 +5,59 @@
 
 void Measurement::add_tf_static(const rosbag::MessageInstance m, bool & tf_data_aquired) {
     tf::tfMessageConstPtr tf_static1=m.instantiate<tf::tfMessage>();
-    tf_static.emplace_back(make_pair(tf_static1->transforms[0],tf_static1->transforms[2]));    //mms->camera  //camera->imu
+    // 0: mms -> camera_right
+    // 1: camera_right -> velodyne
+    // 2: camera_right -> imu
+    tf_static.emplace_back(tf_static1->transforms[0]);
+    tf_static.emplace_back(tf_static1->transforms[1]);
+    tf_static.emplace_back(tf_static1->transforms[2]);
     tf_data_aquired=true;
 }
 Eigen::Matrix4d Measurement::tf_mms_cam() {
     Eigen::Matrix4d transform1=Eigen::Matrix4d::Identity();
-    Eigen::Matrix3d rotations_temp;
+    Eigen::Matrix3d rotations_temp= Eigen::Matrix3d::Identity();
     Eigen::Quaterniond value_temp;
-    value_temp.x()=tf_static[0].first.transform.rotation.x;
-    value_temp.y()=tf_static[0].first.transform.rotation.y;
-    value_temp.z()=tf_static[0].first.transform.rotation.z;
-    value_temp.w()=tf_static[0].first.transform.rotation.w;
+    value_temp.x()=tf_static[0].transform.rotation.x;
+    value_temp.y()=tf_static[0].transform.rotation.y;
+    value_temp.z()=tf_static[0].transform.rotation.z;
+    value_temp.w()=tf_static[0].transform.rotation.w;
     rotations_temp=value_temp.matrix();
-    transform1(0,3)=tf_static[0].first.transform.translation.x;
-    transform1(1,3)=tf_static[0].first.transform.translation.y;
-    transform1(2,3)=tf_static[0].first.transform.translation.z;
+    transform1(0,3)=tf_static[0].transform.translation.x;
+    transform1(1,3)=tf_static[0].transform.translation.y;
+    transform1(2,3)=tf_static[0].transform.translation.z;
     transform1(3,3)=1;
     transform1.block(0,0,3,3)=rotations_temp;
     return transform1;
+}
+Eigen::Matrix4d  Measurement::tf_cam_velodyne()
+{
+    Eigen::Matrix4d transform2=Eigen::Matrix4d::Identity();
+    Eigen::Matrix3d rotations_temp= Eigen::Matrix3d::Identity();
+    Eigen::Quaterniond value_temp;
+    value_temp.x()=tf_static[1].transform.rotation.x;
+    value_temp.y()=tf_static[1].transform.rotation.y;
+    value_temp.z()=tf_static[1].transform.rotation.z;
+    value_temp.w()=tf_static[1].transform.rotation.w;
+    rotations_temp=value_temp.matrix();
+    transform2(0,3)=tf_static[1].transform.translation.x;
+    transform2(1,3)=tf_static[1].transform.translation.y;
+    transform2(2,3)=tf_static[1].transform.translation.z;
+    transform2(3,3)=1;
+    transform2.block(0,0,3,3)=rotations_temp;
+    return transform2;
 }
 Eigen::Matrix4d Measurement::tf_cam_imu() {
     Eigen::Matrix4d transform2=Eigen::Matrix4d::Identity();
     Eigen::Matrix3d rotations_temp;
     Eigen::Quaterniond value_temp;
-    value_temp.x()=tf_static[0].second.transform.rotation.x;
-    value_temp.y()=tf_static[0].second.transform.rotation.y;
-    value_temp.z()=tf_static[0].second.transform.rotation.z;
-    value_temp.w()=tf_static[0].second.transform.rotation.w;
+    value_temp.x()=tf_static[2].transform.rotation.x;
+    value_temp.y()=tf_static[2].transform.rotation.y;
+    value_temp.z()=tf_static[2].transform.rotation.z;
+    value_temp.w()=tf_static[2].transform.rotation.w;
     rotations_temp=value_temp.matrix();
-    transform2(0,3)=tf_static[0].second.transform.translation.x;
-    transform2(1,3)=tf_static[0].second.transform.translation.y;
-    transform2(2,3)=tf_static[0].second.transform.translation.z;
+    transform2(0,3)=tf_static[2].transform.translation.x;
+    transform2(1,3)=tf_static[2].transform.translation.y;
+    transform2(2,3)=tf_static[2].transform.translation.z;
     transform2(3,3)=1;
     transform2.block(0,0,3,3)=rotations_temp;
     return transform2;
@@ -68,8 +90,8 @@ Eigen::Matrix4d Measurement::calculate_relative_transformation_imu(Parameters pa
     Eigen::Matrix4d relativ_transformation=Eigen::Matrix4d::Identity();
     double width;
     double alpha;
-    Eigen::Matrix3d rotation_begin;
-    Eigen::Matrix3d rotation_end;
+    Eigen::Matrix3d rotation_begin=Eigen::Matrix3d::Identity();
+    Eigen::Matrix3d rotation_end=Eigen::Matrix3d::Identity();
     Eigen::Matrix4d transformation_begin=Eigen::Matrix4d::Identity();
     Eigen::Matrix4d transformation_end=Eigen::Matrix4d::Identity();
 
@@ -85,8 +107,14 @@ Eigen::Matrix4d Measurement::calculate_relative_transformation_imu(Parameters pa
         Eigen::Vector3d translation_begin_index_last;
         rotation_begin=tf2imu[1].second.block(0,0,3,3);
         Eigen::Quaterniond value_current(rotation_begin);
+
+        rotation_begin=Eigen::Matrix3d::Identity();
+
         rotation_begin=tf2imu[0].second.block(0,0,3,3);
         Eigen::Quaterniond value_last(rotation_begin);
+
+        rotation_begin=Eigen::Matrix3d::Identity();
+
         translation_begin_index_current[0]=tf2imu[1].second(0,3);
         translation_begin_index_current[1]=tf2imu[1].second(1,3);
         translation_begin_index_current[2]=tf2imu[1].second(2,3);
@@ -98,6 +126,8 @@ Eigen::Matrix4d Measurement::calculate_relative_transformation_imu(Parameters pa
         translation_begin=translation_begin_index_last+alpha*(translation_begin_index_current-translation_begin_index_last);
 
         outcome = value_last.slerp(alpha, value_current);
+
+        rotation_begin=Eigen::Matrix3d::Identity();
         rotation_begin=outcome.matrix();
         transformation_begin.block(0,0,3,3)=rotation_begin;
         transformation_begin(0,3)=translation_begin[0];
@@ -123,8 +153,14 @@ Eigen::Matrix4d Measurement::calculate_relative_transformation_imu(Parameters pa
 
         rotation_end=tf2imu[3].second.block(0,0,3,3);
         Eigen::Quaterniond value_current(rotation_end);
+
+        rotation_end=Eigen::Matrix3d::Identity();
+
         rotation_end=tf2imu[2].second.block(0,0,3,3);
         Eigen::Quaterniond value_last(rotation_end);
+
+        rotation_end=Eigen::Matrix3d::Identity();
+
         translation_end_index_current[0]=tf2imu[3].second(0,3);
         translation_end_index_current[1]=tf2imu[3].second(1,3);
         translation_end_index_current[2]=tf2imu[3].second(2,3);
@@ -132,6 +168,7 @@ Eigen::Matrix4d Measurement::calculate_relative_transformation_imu(Parameters pa
         translation_end_index_last[0]=tf2imu[2].second(0,3);
         translation_end_index_last[1]=tf2imu[2].second(1,3);
         translation_end_index_last[2]=tf2imu[2].second(2,3);
+
         translation_end=translation_end_index_last+alpha*(translation_end_index_current-translation_end_index_last);
         outcome = value_last.slerp(alpha, value_current);
         rotation_end=outcome.matrix();
@@ -145,20 +182,21 @@ Eigen::Matrix4d Measurement::calculate_relative_transformation_imu(Parameters pa
         //rotation
         transformation_end=tf2imu[3].second;
     }
-    relativ_transformation=transformation_begin.inverse()*transformation_end;
+    relativ_transformation=transformation_end*transformation_begin.inverse();
+    //cout<<transformation_end<<endl;
+    //cout<<transformation_begin*relativ_transformation<<endl;
     return relativ_transformation;
-
-
 }
+
 void Measurement::transform_gt_imu(Eigen::Matrix4d tf_mms_cam, Eigen::Matrix4d tf_cam_imu, Parameters parameters ) {
     int index=0;
     double start_time=parameters.get_START_COMPUTE_TIME();
     double end_time=parameters.get_END_COMPUTE_TIME();
     Eigen::Matrix4d transform_to_imu = Eigen::Matrix4d::Identity();
-    Eigen::Matrix3d rotations;
+    Eigen::Matrix3d rotations=Eigen::Matrix3d ::Identity();
     Eigen::Quaterniond value;
     Eigen::Matrix4d transform_to_imu_last= Eigen::Matrix4d::Identity();
-    Eigen::Matrix3d rotations_last;
+    Eigen::Matrix3d rotations_last=Eigen::Matrix3d ::Identity();
     Eigen::Quaterniond value_last;
     geometry_msgs::PoseStamped temp;
     // get the transformationsmatrix of the frame that contains start_compute_time
@@ -172,23 +210,31 @@ void Measurement::transform_gt_imu(Eigen::Matrix4d tf_mms_cam, Eigen::Matrix4d t
     transform_to_imu(1, 3) = ground_truth[1].second.pose.position.y;
     transform_to_imu(2, 3) = ground_truth[1].second.pose.position.z;
     transform_to_imu(3, 3) = 1;
-    transform_to_imu = transform_to_imu * tf_mms_cam;
-    transform_to_imu = transform_to_imu * tf_cam_imu;
+    Eigen::Matrix4d test= Eigen::Matrix4d::Identity();
+    test=tf_cam_imu.inverse()*tf_mms_cam.inverse();
+    transform_to_imu=test*transform_to_imu;
     // get the transformationsmatrix of the latest frame that contains start_compute_time
     value_last.x() = ground_truth[0].second.pose.orientation.x;
     value_last.y() = ground_truth[0].second.pose.orientation.y;
     value_last.z() = ground_truth[0].second.pose.orientation.z;
     value_last.w() = ground_truth[0].second.pose.orientation.w;
-    rotations_last = value.matrix();
-    transform_to_imu_last.block(0, 0, 3, 3) = rotations;
+    rotations_last = value_last.matrix();
+    transform_to_imu_last.block(0, 0, 3, 3) = rotations_last;
     transform_to_imu_last(0, 3) = ground_truth[0].second.pose.position.x;
     transform_to_imu_last(1, 3) = ground_truth[0].second.pose.position.y;
     transform_to_imu_last(2, 3) = ground_truth[0].second.pose.position.z;
     transform_to_imu_last(3, 3) = 1;
-    transform_to_imu_last = transform_to_imu_last * tf_mms_cam;
-    transform_to_imu_last = transform_to_imu_last * tf_cam_imu;
+    transform_to_imu_last= test*transform_to_imu_last;
+    //transform_to_imu_last = transform_to_imu_last * tf_mms_cam;
+    //transform_to_imu_last = transform_to_imu_last * tf_cam_imu;
     tf2imu.emplace_back(make_pair(ground_truth[0].first, transform_to_imu_last));
     tf2imu.emplace_back(make_pair(ground_truth[1].first, transform_to_imu));
+
+    transform_to_imu=Eigen::Matrix4d::Identity();
+    transform_to_imu_last=Eigen::Matrix4d::Identity();
+    rotations=Eigen::Matrix3d::Identity();
+    rotations_last=Eigen::Matrix3d::Identity();
+
     // get the transformationsmatrix of the frame that contains end_compute_time
     index=ground_truth.size()-1;
     value.x() = ground_truth[index].second.pose.orientation.x;
@@ -201,21 +247,23 @@ void Measurement::transform_gt_imu(Eigen::Matrix4d tf_mms_cam, Eigen::Matrix4d t
     transform_to_imu(1, 3) = ground_truth[index].second.pose.position.y;
     transform_to_imu(2, 3) = ground_truth[index].second.pose.position.z;
     transform_to_imu(3, 3) = 1;
-    transform_to_imu = transform_to_imu * tf_mms_cam;
-    transform_to_imu = transform_to_imu * tf_cam_imu;
+    //transform_to_imu = transform_to_imu * tf_mms_cam;
+    //transform_to_imu = transform_to_imu * tf_cam_imu;
+    transform_to_imu=test*transform_to_imu;
     // get the transformationsmatrix of the latest frame that contains end_compute_time
     value_last.x() = ground_truth[index-1].second.pose.orientation.x;
     value_last.y() = ground_truth[index-1].second.pose.orientation.y;
     value_last.z() = ground_truth[index-1].second.pose.orientation.z;
     value_last.w() = ground_truth[index-1].second.pose.orientation.w;
-    rotations_last = value.matrix();
-    transform_to_imu_last.block(0, 0, 3, 3) = rotations;
+    rotations_last = value_last.matrix();
+    transform_to_imu_last.block(0, 0, 3, 3) = rotations_last;
     transform_to_imu_last(0, 3) = ground_truth[index-1].second.pose.position.x;
     transform_to_imu_last(1, 3) = ground_truth[index-1].second.pose.position.y;
     transform_to_imu_last(2, 3) = ground_truth[index-1].second.pose.position.z;
     transform_to_imu_last(3, 3) = 1;
-    transform_to_imu_last = transform_to_imu_last * tf_mms_cam;
-    transform_to_imu_last = transform_to_imu_last * tf_cam_imu;
+    //transform_to_imu_last = transform_to_imu_last * tf_mms_cam;
+    //transform_to_imu_last = transform_to_imu_last * tf_cam_imu;
+    transform_to_imu_last=test*transform_to_imu_last;
     tf2imu.emplace_back(make_pair(ground_truth[index-1].first, transform_to_imu_last));
     tf2imu.emplace_back(make_pair(ground_truth[index].first, transform_to_imu));
 

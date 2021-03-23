@@ -2,26 +2,9 @@
  int KdTree::splitAttribute_static=0;
 Eigen::Vector3d rotationMatrixtoEulerAngle(Eigen::Matrix3d & matrix)
 {
-    double roll ,pitch ,yaw;
-    Eigen::Vector3d temp;
-    double sy= sqrt(matrix(0,0)*matrix(0,0)+matrix(1,0)*matrix(1,0));
-    if(sy<1e-6)
-    {
-        roll=atan2(-matrix(1,2),matrix(1,1));
-        pitch=atan2(-matrix(2,0),sy);
-        yaw=0;
-
-    }
-    else
-    {
-        roll=atan2(matrix(2,1),matrix(2,2));
-        pitch=atan2(-matrix(2,0),sy);
-        yaw=atan2(matrix(1,0),matrix(0,0));
-    }
-    temp[0]=roll*180/M_PI;
-    temp[1]=pitch*180/M_PI;
-    temp[2]=yaw*180/M_PI;
-    return temp;
+    Eigen::Vector3d euler_t;
+    euler_t=matrix.eulerAngles(2,1,0);
+    return euler_t;
 }
 
 //long curTime()
@@ -162,34 +145,22 @@ int main(int argc, char ** argv)
             }
     }
 
-
-//    Eigen::Vector3d initial_pos;
-//    initial_pos[0]=0;
-//    initial_pos[1]=0;
-//    initial_pos[2]=0;
-//    Eigen::Vector3d pos=PF.estimation_position(est_pos,initial_pos);
-
-
-
-
     //mms->camera
     Eigen::Matrix4d transform1=Eigen::Matrix4d::Identity();
     //camera->imu
     Eigen::Matrix4d transform2=Eigen::Matrix4d::Identity();
-    //mms->camera
+
     transform1=measurement.tf_mms_cam();
-    transform2=measurement.tf_cam_imu();
-    //imu.calculate_ground_truth( parameters, points,transform1,transform2);
-    rotation=imu.vel2rotatation(parameters.get_START_COMPUTE_TIME(),parameters.get_END_COMPUTE_TIME());
+    //transform2=measurement.tf_cam_imu();
+    transform2=measurement.tf_cam_velodyne();
 
     Eigen::Matrix4d relativ_transformation_imu=Eigen::Matrix4d::Identity();
     measurement.transform_gt_imu(transform1,transform2,parameters);
     relativ_transformation_imu=measurement.calculate_relative_transformation_imu(parameters);
-
     Eigen::Matrix4d relativ_transformation_mms=Eigen::Matrix4d::Identity();
-
-    relativ_transformation_mms=transform1.inverse()*relativ_transformation_imu;
-    relativ_transformation_mms=transform2.inverse()*relativ_transformation_mms;
+    cout<<relativ_transformation_imu<<endl;
+    //relativ_transformation_mms=transform1.inverse()*relativ_transformation_imu;
+    //relativ_transformation_mms=transform2.inverse()*relativ_transformation_mms;
     Eigen::Matrix3d rot=relativ_transformation_imu.block(0,0,3,3);
     Eigen::Vector3d e=rotationMatrixtoEulerAngle(rot);
     cout<<e<<endl;

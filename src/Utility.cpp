@@ -35,6 +35,8 @@ void load_from_config(Parameters & parameters)
     parameters.set_LLH_uncertainty(config["LLH_NC_L1"].as<double>(),config["LLH_NC_L2"].as<double>(),config["LLH_NC_H"].as<double>());
     //Topics
     parameters.load_topics(config["topics"].as<vector<string>>());
+    //PF Threshold
+    parameters.set_PF_threshold(config["particle_filter_threshold"].as<double>());
 }
 
 
