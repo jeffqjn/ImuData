@@ -36,11 +36,9 @@ IntervalMatrix IMU::vel2rotatation(double start_compute_time, double  end_comput
         delta_t=min(vel_data[i].first.ub(),end_compute_time)-max(start_compute_time,vel_data[i].first.lb());
         IntervalMatrix Matrix_temp(3,3);
         Matrix_temp=calculate_rodrigues_rotation(vel_data[i].second,delta_t);
-        //cout<<Matrix_temp<<endl;
         Matrix_temp &=IntervalMatrix(3,3,Interval(-1,1));
         overall_rotation*=Matrix_temp;
     }
-    //cout<<overall_rotation<<endl;
     overall_rotation &=IntervalMatrix(3,3,Interval(-1,1));
     return overall_rotation;
 }

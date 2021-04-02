@@ -35,11 +35,25 @@ void Particle_Filter::show_boxes(int argc, char** argv)
 {
     ros::init(argc,argv,"boxes_show");
     ros::NodeHandle nh;
+    visualization_msgs::MarkerArray  temp;
+    int count=1000;
+    for(int i=0;i<marker_array.markers.size();i++)
+    {
+        if(count<0)
+        {
+            break;
+        }
+        temp.markers.emplace_back(marker_array.markers[i]);
+        temp.markers.emplace_back(marker_array.markers[i+flag1]);
+        temp.markers.emplace_back(marker_array.markers[i+flag2]);
+        count--;
+    }
+
     ros::Publisher boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("boxes_output",0);
     ros::Rate loop_rate(0.1);
     while(ros::ok())
     {
-        boxes_pub.publish(marker_array);
+        boxes_pub.publish(temp);
         ros::spinOnce();
         loop_rate.sleep();
     }
@@ -59,45 +73,99 @@ void Particle_Filter::build_LiDAR_Interval(Parameters &parameters,LiDAR_PointClo
     double vertical_angle_uncertainty;
     pcl::PointCloud<pcl::PointXYZ> *pc;
 
+    double x_coordinate;
+    double y_coordinate;
+    double z_coordinate;
+    double rho;
+    double phi;
+    double theta;
+    Interval interval_rho;
+    Interval interval_phi;
+    Interval interval_theta;
+    IntervalVector coordinate(3,Interval(0));
+    IntervalVector horizontal_opening_angle(3,Interval(0));
+    IntervalVector vertical_opening_angle(3,Interval(0));
+
     parameters.get_LiDAR_error_model_param(rho_uncertinty,phi_uncertinty,theta_uncertinty,horizontal_angle_uncertainty,vertical_angle_uncertainty);
 
-    if(pointclouds_Interval[1].second.empty())
+    if(pointclouds_Interval[0].second.empty())
     {
-        pc=&pointcloud.pointclouds[1].second;
+        pc=&pointcloud.pointclouds[0].second;
     }
     else
     {
         pc=&transform_last_use_particle;
     }
+    for (unsigned int i = 0; i < pc->points.size(); ++i)
+    {
+
+        x_coordinate=pc->points[i].x;
+        y_coordinate=pc->points[i].y;
+        z_coordinate=pc->points[i].z;
+
+        rho=sqrt(pow(x_coordinate,2)+pow(y_coordinate,2)+pow(z_coordinate,2));
+        theta=acos(z_coordinate/rho);
+        phi=atan2(y_coordinate,x_coordinate);
+
+        interval_rho=Interval(rho).inflate(rho_uncertinty);
+        interval_phi=Interval(phi).inflate(phi_uncertinty);
+        interval_theta=Interval(theta).inflate(theta_uncertinty);
+
+        coordinate[0]=interval_rho*sin(interval_theta)*cos(interval_phi);
+        coordinate[1]=interval_rho*sin(interval_theta)*sin(interval_phi);
+        coordinate[2]=interval_rho*cos(interval_theta);
+        //cout<<coordinate<<endl;
+        //additional uncertinty due to the initial footprint of the laser beam
+
+//        horizontal_opening_angle[0]=sin(Interval(phi))+Interval(-horizontal_angle_uncertainty,+horizontal_angle_uncertainty);
+//        horizontal_opening_angle[1]=-cos(Interval(phi))+Interval(-horizontal_angle_uncertainty,+horizontal_angle_uncertainty);
+//        horizontal_opening_angle[2]=Interval(0)+Interval(-horizontal_angle_uncertainty,+horizontal_angle_uncertainty);
+
+        horizontal_opening_angle[0]=sin(phi)*Interval(0).inflate(horizontal_angle_uncertainty);
+        horizontal_opening_angle[1]=-cos(phi)*Interval(0).inflate(horizontal_angle_uncertainty);
+        horizontal_opening_angle[2]=Interval(0)*Interval(0).inflate(horizontal_angle_uncertainty);
+
+//        vertical_opening_angle[0]=cos(Interval(theta))*cos(Interval(phi))+Interval(-vertical_angle_uncertainty,+vertical_angle_uncertainty);
+//        vertical_opening_angle[1]=cos(Interval(theta))*sin(Interval(phi))+Interval(-vertical_angle_uncertainty,+vertical_angle_uncertainty);
+//        vertical_opening_angle[2]=-sin(Interval(theta))+Interval(-vertical_angle_uncertainty,+vertical_angle_uncertainty);
+
+        vertical_opening_angle[0]=cos(theta)*cos(phi)*Interval(0).inflate(vertical_angle_uncertainty);
+        vertical_opening_angle[1]=cos(theta)*sin(phi)*Interval(0).inflate(vertical_angle_uncertainty);
+        vertical_opening_angle[2]=-sin(theta)*Interval(0).inflate(vertical_angle_uncertainty);
+
+        coordinate+=horizontal_opening_angle+vertical_opening_angle;
+        //cout<<coordinate<<endl;
+        LiDARpoints.emplace_back(coordinate);
+    }
     //convert LiDAR-point into spherical coordinates
     //parallelism
-    std::vector<std::thread> thread_vec(4);
-    std::mutex               mutex;
-    int cloud_size= pc->points.size();
-    for ( int i = 0; i < 3; ++i)
+//    std::vector<std::thread> thread_vec(4);
+//    std::mutex               mutex;
+//    int cloud_size= pc->points.size();
+//    for ( int i = 0; i < 3; ++i)
+//    {
+//        const  int start_index = cloud_size / 4 * i;
+//        const  int end_index   = cloud_size / 4 * (i + 1);
+//        thread_vec[i] =
+//                std::thread(&Particle_Filter::intervalCalcuateThread,this, pc,start_index,end_index,rho_uncertinty, phi_uncertinty,theta_uncertinty, horizontal_angle_uncertainty, vertical_angle_uncertainty ,&mutex);
+//    }
+//     const int left_index_start = cloud_size / 4*3;
+//     const int left_index_end   = cloud_size ;
+//
+//    thread_vec[3] =
+//            std::thread(&Particle_Filter::intervalCalcuateThread,this, pc,left_index_start,left_index_end,rho_uncertinty, phi_uncertinty,theta_uncertinty, horizontal_angle_uncertainty, vertical_angle_uncertainty ,&mutex);
+//
+//    for (auto it = thread_vec.begin(); it != thread_vec.end(); ++it)
+//    {
+//        it->join();
+//    }
+    if(pointclouds_Interval[0].second.empty())
     {
-        const  int start_index = cloud_size / 4 * i;
-        const  int end_index   = cloud_size / 4 * (i + 1);
-        thread_vec[i] =
-                std::thread(&Particle_Filter::intervalCalcuateThread,this, pc,start_index,end_index,rho_uncertinty, phi_uncertinty,theta_uncertinty, horizontal_angle_uncertainty, vertical_angle_uncertainty ,&mutex);
-    }
-     const int left_index_start = cloud_size / 4*3;
-     const int left_index_end   = cloud_size ;
-
-    thread_vec[3] =
-            std::thread(&Particle_Filter::intervalCalcuateThread,this, pc,left_index_start,left_index_end,rho_uncertinty, phi_uncertinty,theta_uncertinty, horizontal_angle_uncertainty, vertical_angle_uncertainty ,&mutex);
-
-    for (auto it = thread_vec.begin(); it != thread_vec.end(); ++it)
-    {
-        it->join();
-    }
-    if(pointclouds_Interval[1].second.empty())
-    {
-        pointclouds_Interval[1]=make_pair(pc->header.stamp,LiDARpoints);
+        pointclouds_Interval[0]=make_pair(pc->header.stamp,LiDARpoints);
     }
     else
     {
-        pointclouds_Interval[0]=make_pair(pc->header.stamp,LiDARpoints);
+        pointclouds_Interval[1]=make_pair(pc->header.stamp,LiDARpoints);
     }
     LiDARpoints.clear();
 }
@@ -116,22 +184,11 @@ void Particle_Filter::intervalCalcuateThread(pcl::PointCloud<pcl::PointXYZ> *pc,
     IntervalVector horizontal_opening_angle(3,Interval(0));
     IntervalVector vertical_opening_angle(3,Interval(0));
 
-//    Interval roh_u;
-//    Interval theta_u;
-//    Interval phi_u;
-
-//    roh_u=sqrt(pow(Interval(-0.05,0.05),2)+(Interval(-0.05,0.05),2)+(Interval(-0.015,0.015),2));
-//    theta_u=acos(Interval(-0.015,0.015)/roh_u);
-//    phi_u=atan(Interval(-0.05,0.05)/Interval(-0.05,0.05));
-//    cout<<"rho"<<roh_u<<endl;
-//    cout<<"theta"<<theta_u<<endl;
-//    cout<<"phi"<<phi_u<<endl;
     for (unsigned int i = start_index; i < end_index; ++i)
     {
         x_coordinate=pc->points[i].x;
         y_coordinate=pc->points[i].y;
         z_coordinate=pc->points[i].z;
-
 
         rho=sqrt(x_coordinate*x_coordinate+y_coordinate*y_coordinate+z_coordinate*z_coordinate);
         theta=acos(z_coordinate/rho);
@@ -204,77 +261,180 @@ void Particle_Filter::get_label(pcl::PointCloud<pcl::PointXYZI> &temp, vector<in
 
 
 }
+void Particle_Filter::show_pointcloud_original(int argc, char** argv, LiDAR_PointCloud & pointcloud)
+{
+    pcl::PointCloud<pcl::PointXYZ> * match;
+    match= &pointcloud.pointclouds[0].second;
+    //add points to pointcloud(truth)
+    for (int i = 0; i < match->points.size(); ++i) {
+        pcl::PointXYZRGB temp;
+        temp.x=match->points[i].x;
+        temp.y=match->points[i].y;
+        temp.z=match->points[i].z;
+        temp.r=255;
+        temp.g=0;
+        temp.b=0;
+        need_show_truth.points.emplace_back(temp);
+    }
+    //add points to pointcloud(transformed)
+    for (int i = 0; i < transform_last_use_particle.points.size(); ++i) {
+        pcl::PointXYZRGB temp;
+        temp.x=transform_last_use_particle.points[i].x;
+        temp.y=transform_last_use_particle.points[i].y;
+        temp.z=transform_last_use_particle.points[i].z;
+        temp.r=0;
+        temp.g=0;
+        temp.b=255;
+        need_show_transformed.points.emplace_back(temp);
+    }
+    pointcloud_show(argc,argv);
+}
+vector<IntervalVector> intervalbuild_debug(vector<int> &ind, Parameters parameters, LiDAR_PointCloud pointcloud)
+{
+    double rho_uncertinty;
+    double phi_uncertinty;
+    double theta_uncertinty;
+    double horizontal_angle_uncertainty;
+    double vertical_angle_uncertainty;
+    pcl::PointCloud<pcl::PointXYZ> *pc;
+    pc=&pointcloud.pointclouds[1].second;
+
+    double x_coordinate;
+    double y_coordinate;
+    double z_coordinate;
+    double rho;
+    double phi;
+    double theta;
+    Interval interval_rho;
+    Interval interval_phi;
+    Interval interval_theta;
+    IntervalVector coordinate(3,Interval(0));
+    IntervalVector horizontal_opening_angle(3,Interval(0));
+    IntervalVector vertical_opening_angle(3,Interval(0));
+    vector<IntervalVector> erg;
+    parameters.get_LiDAR_error_model_param(rho_uncertinty,phi_uncertinty,theta_uncertinty,horizontal_angle_uncertainty,vertical_angle_uncertainty);
+
+    for (unsigned int i = 0; i < ind.size(); ++i)
+    {
+        x_coordinate=pc->points[ind[i]].x;
+        y_coordinate=pc->points[ind[i]].y;
+        z_coordinate=pc->points[ind[i]].z;
+        rho=sqrt(pow(x_coordinate,2)+pow(y_coordinate,2)+pow(z_coordinate,2));
+        theta=acos(z_coordinate/rho);
+        phi=atan2(y_coordinate,x_coordinate);
+        interval_rho=Interval(rho).inflate(rho_uncertinty);
+        interval_phi=Interval(phi).inflate(phi_uncertinty);
+        interval_theta=Interval(theta).inflate(theta_uncertinty);
+
+        coordinate[0]=interval_rho*sin(interval_theta)*cos(interval_phi);
+        coordinate[1]=interval_rho*sin(interval_theta)*sin(interval_phi);
+        coordinate[2]=interval_rho*cos(interval_theta);
+        //cout<<coordinate<<endl;
+        //additional uncertinty due to the initial footprint of the laser beam
+        horizontal_opening_angle[0]=sin(phi);
+        horizontal_opening_angle[1]=-cos(phi);
+        horizontal_opening_angle[2]=Interval(0);
+        horizontal_opening_angle[0]=horizontal_opening_angle[0]*Interval(0).inflate(horizontal_angle_uncertainty);
+        horizontal_opening_angle[1]=horizontal_opening_angle[1]*Interval(0).inflate(horizontal_angle_uncertainty);
+        horizontal_opening_angle[2]=horizontal_opening_angle[2]*Interval(0).inflate(horizontal_angle_uncertainty);
+
+        vertical_opening_angle[0]=cos(theta)*cos(phi);
+        vertical_opening_angle[1]=cos(theta)*sin(phi);
+        vertical_opening_angle[2]=-sin(theta);
+        vertical_opening_angle[0]=vertical_opening_angle[0]*Interval(0).inflate(vertical_angle_uncertainty);
+        vertical_opening_angle[1]=vertical_opening_angle[1]*Interval(0).inflate(vertical_angle_uncertainty);
+        vertical_opening_angle[2]=vertical_opening_angle[2]*Interval(0).inflate(vertical_angle_uncertainty);
+        coordinate+=horizontal_opening_angle+vertical_opening_angle;
+
+        erg.emplace_back(coordinate);
+    }
+    return erg;
+}
+bool intersection_debug(vector<IntervalVector> &erg, IntervalVector & origin)
+{
+    bool temp=false;
+    for(auto item : erg)
+    {
+        cout<<"truth:"<<item<<endl;
+        cout<<"origin:"<<origin<<endl;
+        if(item[0].intersects(origin[0]) && item[1].intersects(origin[1]) && item[2].intersects(origin[2]))
+        {
+            temp= true;
+        }
+    }
+    return temp;
+}
 vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_set_up(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,int argc, char ** argv){
 
     int max_index;
     int count=0;
-    double max_value, min_value;
 
     pointclouds_Interval.resize(2);
-
     //6 Dimension transformation IntervalVector
     IntervalVector box_6D=create_6D_box(imu,pointcloud);
 
     //use end_time to build KD-Tree
 
-    tree_after_transform.setInputCloud(pointcloud.pointclouds[1].second.makeShared());
+    tree_after_transform.setInputCloud(pointcloud.pointclouds[0].second.makeShared());
 
+
+    IntervalVector origin(3);
+    origin[0]=Interval(6.17750277441837, 7.273870844470488);
+    origin[1]=Interval(-6.063900988926803, -4.77126008637618);
+    origin[2]=Interval(-1.217827272155988, 0.2968505383831934);
+    //bool erg2= intersection_debug(erg1,origin);
 
     build_LiDAR_Interval(parameters,pointcloud);
-    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> particle=generate_particle(box_6D,2,3,3,3,3,2);//233332
-
-    // one LiDAR Point can only matched once
-    if_matched.resize(pointcloud.pointclouds[1].second.points.size(),false);
+    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> particle=generate_particle(box_6D,3,3,5,5,5,3);//233332
 
     long start,end;
     start= curTime();
 
     int particle_size=particle.size();
-    int point_cloud_size=pointcloud.pointclouds[0].second.points.size();
-
+    int point_cloud_size=pointcloud.pointclouds[1].second.points.size();
     pcl::PointCloud<pcl::PointXYZ> estimation;
     vector<IntervalVector> estimation_interval;
 
-//    for(int num=0;num<pointclouds_Interval[1].second.size();num++)
-//    {
-//        add_marker_to_array(pointclouds_Interval[1].second[num],
-//                marker_array, 255,0,
-//                0, 0.5);
-//    }
     for(int j=0;j<particle_size;j++)
     {
 //        Ground_Truth
-//        particle[j].first[0]=3.13981;
-//        particle[j].first[1]=3.14148;
-//        particle[j].first[2]=3.14133;
+//        particle[j].first[0]=0.00087549;
+//        particle[j].first[1]=0.0001677642;
+//        particle[j].first[2]=-3.4754e-05;
 //
-//        particle[j].second[0]=-0.129968;
-//        particle[j].second[1]=-0.00358497;
-//        particle[j].second[2]=-0.0100606;
+//        particle[j].second[0]=0.061511;
+//        particle[j].second[1]=0.00145935;
+//        particle[j].second[2]=0.00493282;
 
-        particle[j].first[0]=0.00175254;
-        particle[j].first[1]=-0.000119835;
-        particle[j].first[2]=-0.00042162;
+//        particle[j].first[0]=3.14074;
+//        particle[j].first[1]= -3.14143;
+//        particle[j].first[2]=-3.14155;
+//
+//
+//        particle[j].second[0]= -0.0619196;
+//        particle[j].second[1]=-0.0014209;
+//        particle[j].second[2]=-0.00497539;
 
-        particle[j].second[0]=-0.13036;
-        particle[j].second[1]=0.0063506;
-        particle[j].second[2]=-0.00140698;
+        particle[j].first[0]=4.18063e-05;
+        particle[j].first[1]=-0.000161487;
+        particle[j].first[2]=-0.000861295;
 
-        transform_use_particle(pointcloud.pointclouds[0].second,particle[j].first, particle[j].second);
 
-//                for(int num=0;num<pointclouds_Interval[0].second.size();num++)
-//        {
-//            add_marker_to_array(pointclouds_Interval[0].second[num],
-//                                marker_array, 0,0,
-//                                255, 0.5);
-//        }
-        pointcloud_show(argc,argv,pointcloud.pointclouds[1].second);
+        particle[j].second[0]= -0.0619186;
+        particle[j].second[1]= -0.00146307;
+        particle[j].second[2]=-0.00498842;
+        //DEBUG
+        //bool erg=box_6D[0].contains(particle[j].first[0]) && box_6D[1].contains(particle[j].first[1]) && box_6D[2].contains(particle[j].first[2]);
+        //cout<<erg<<endl;
+        transform_use_particle(pointcloud.pointclouds[1].second,particle[j].first, particle[j].second);
+
+        show_pointcloud_original(argc,argv,pointcloud);
+
         pcl::PointCloud<pcl::PointXYZI> temp;
         pointxyz2pointxyzi(transform_last_use_particle.makeShared(),temp);
         get_label(temp,label);
 
         build_LiDAR_Interval(parameters,pointcloud);
-
         //parallelism
         std::vector<std::thread> thread_vec(8);
         std::mutex               mutex;
@@ -295,34 +455,30 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
         {
             it->join();
         }
-
-
-        //cout<<summe<<endl;
-        //show_pointcloud(argc,argv);
-        //DEBUG
-        //sums.emplace_back(summe);
-        //cout<<transform_last_use_particle.points.size()<<endl;
+        //add_point2pointcloud(pointcloud);
+        //pointcloud_show(argc,argv);
+        //show_boxes(argc,argv);
+        cout<<particle[j].first<<endl;
+        cout<<particle[j].second<<endl;
+        cout<<summe<<endl;
         cout<<count++<<endl;
-//        if(summe>max_value)
-//        {
-//            max_value=summe;
-//            max_index=j;
-//        }
-//        if(summe<min_value)
-//        {min_value=summe;}
+        update_max(summe);
+        update_min(summe);
         weights.emplace_back(particle_weighted(j,summe));
         pointclouds_Interval[0].second.clear();
         label.clear();
+        marker_array.markers.clear();
         for(int l=0; l<if_matched.size();l++)
         {
             if_matched[l]= false;
         }
-        summe=0.;
-        cout<<marker_array.markers.size()<<endl;
-        show_boxes(argc,argv);
+        summe=0;
+        //cout<<marker_array.markers.size()<<endl;
+
 
     }
-
+    cout<<max_value<<endl;
+    cout<<min_value<<endl;
     sort(weights.begin(),weights.end(),GreaterSort);
 
     //resampling
@@ -394,17 +550,31 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
     imu.vel_data.erase(imu.vel_data.begin(),imu.vel_data.end()-2);
     return result;
 }
-
+void Particle_Filter::update_max(int s)
+{
+    if(s>max_value)
+    {
+        max_value=s;
+    }
+}
+void Particle_Filter::update_min(int s)
+{
+    if(s<min_value)
+    {
+        min_value=s;
+    }
+}
 void Particle_Filter::particleCalcuateThread(LiDAR_PointCloud *pointCloud,int start_index, int end_index,std::mutex* mutex)
 {
     vector<int> indices;
     vector<float> distances;
     for(int i=start_index; i<end_index;i++)
     {
-        double radius = sqrt(pow(pointclouds_Interval[1].second[i][0].diam(),2)+ pow(pointclouds_Interval[1].second[i][1].diam(),2)+ pow(pointclouds_Interval[1].second[i][2].diam(),2));
+        double radius = sqrt(pow(pointclouds_Interval[0].second[i][0].diam(),2)+ pow(pointclouds_Interval[0].second[i][1].diam(),2)+ pow(pointclouds_Interval[0].second[i][2].diam(),2))/2;
         if (tree_after_transform.radiusSearch(transform_last_use_particle.points[i], radius, indices, distances) >0)
+            //if (tree_after_transform.nearestKSearch(transform_last_use_particle.points[i], 1, indices, distances) >0)
         {
-            summe+= calculate_weight(*pointCloud, indices,if_matched, pointclouds_Interval[1].second[i],i, mutex);
+            summe+= calculate_weight(*pointCloud, indices,if_matched, pointclouds_Interval[0].second[i],i, mutex);
             indices.clear();
             distances.clear();
         }
@@ -526,6 +696,7 @@ IntervalVector Particle_Filter::create_6D_box(IMU imu, LiDAR_PointCloud pointclo
     Interval velocity_interval_xy(-4.16,13.8);
     Interval velocity_interval_z(-2.,2.);
     rotation=imu.vel2rotatation(start_time,end_time);
+
     Euler_Angle=IntervalrotationMatrixtoEulerAngle(rotation);
 
     box_6D[3]=velocity_interval_xy*(end_time-start_time);
@@ -540,92 +711,106 @@ IntervalVector Particle_Filter::create_6D_box(IMU imu, LiDAR_PointCloud pointclo
 double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<int> &indices, vector<bool> &if_matched, IntervalVector & point_after_transform,int k, std::mutex* mutex)
 {
     double volume=0;
-    double summe=0;
+    double sum=0;
 
+    //cout<<indices.size()<<endl;
     for(int i=0;i<indices.size();i++) {
-        if (label[k] == pointcloud.labels[1].second[indices[i]]) {
+        //if (label[k] == pointcloud.labels[1].second[indices[i]]) {
             IntervalVector current = pointclouds_Interval[1].second[indices[i]];
             bool x = current[0].intersects(point_after_transform[0]);
             bool y = current[1].intersects(point_after_transform[1]);
             bool z = current[2].intersects(point_after_transform[2]);
-//        double volume=point_after_transform[0].diam()*point_after_transform[1].diam()*point_after_transform[2].diam();
-//        Interval x(max(current[0].lb(),point_after_transform[0].lb()),min(current[0].ub(),point_after_transform[0].ub()));
-//        Interval y(max(current[1].lb(),point_after_transform[1].lb()),min(current[1].ub(),point_after_transform[1].ub()));
-//        Interval z(max(current[2].lb(),point_after_transform[2].lb()),min(current[2].ub(),point_after_transform[2].ub()));
-//        double intersect_volume=abs(x.ub()-x.lb())*abs(y.ub()-y.lb())*abs(z.ub()-z.lb());
-            if (x && y && z && !if_matched[indices[i]]/*&&(intersect_volume>=volume/8)*/) {
-//            pcl::PointXYZRGB truth;
-//            truth.x=pointcloud.pointclouds[1].second.points[indices[i]].x;
-//            truth.y=pointcloud.pointclouds[1].second.points[indices[i]].y;
-//            truth.z=pointcloud.pointclouds[1].second.points[indices[i]].z;
-//            truth.r=255;
-//            truth.g=0;
-//            truth.b=0;
-//            need_show_truth.points.emplace_back(truth);
-//            pcl::PointXYZRGB transformed;
-//            transformed.x=transform_last_use_particle.points[k].x;
-//            transformed.y=transform_last_use_particle.points[k].y;
-//            transformed.z=transform_last_use_particle.points[k].z;
-//            transformed.r=0;
-//            transformed.g=0;
-//            transformed.b=255;
-//            need_show_transformed.points.emplace_back(transformed);
-//
-//                       Interval x(max(current[0].lb(),point_after_transform[0].lb()),min(current[0].ub(),point_after_transform[0].ub()));
-//           Interval y(max(current[1].lb(),point_after_transform[1].lb()),min(current[1].ub(),point_after_transform[1].ub()));
-//           Interval z(max(current[2].lb(),point_after_transform[2].lb()),min(current[2].ub(),point_after_transform[2].ub()));
-//            volume+=abs(x.ub()-x.lb())*abs(y.ub()-y.lb())*abs(z.ub()-z.lb());
-//DEBUG
-//if(d>0) {
-    if (first) {
-        mutex->lock();
-        add_marker_to_array(point_after_transform, marker_array, 0, 0, 255, 0.5);
-        mutex->unlock();
-        first = false;
-    }
-   // if (c-- != 0) {
-        mutex->lock();
-        add_marker_to_array(current, marker_array, 255, 0, 0, 0.5);
-        mutex->unlock();
-   // }
-   // d--;
-//}
-                if(label[k]==1)
-                {
-                    summe=summe+0.5;
-                }
-                else
-                {
-                    summe=summe+2;
-                }
+            if (x && y && z /*&& !if_matched[indices[i]]&&(intersect_volume>=volume/8)*/) {
 
-                if_matched[indices[i]] = true;
+//                if(label[k]==1)
+//                {
+//                    sum=sum+0.5;
+//                }
+//                else
+//                {
+//                    //cout<<summe<<endl;
+//                    sum=sum+1;
+//                }
+                // add matched point to matched array
+
+                pcl::PointXYZRGB temp;
+                temp.x=transform_last_use_particle.points[k].x;
+                temp.y=transform_last_use_particle.points[k].y;
+                temp.z=transform_last_use_particle.points[k].z;
+                temp.r=255;
+                temp.g=0;
+                temp.b=0;
+                mutex->lock();
+                matched.points.emplace_back(temp);
+                add_marker_to_array(point_after_transform,marker_array,255,0,0,0.5);
+                add_marker_to_array(current,marker_array,0,255,0,0.5);
+                mutex->unlock();
+                return 1;
             }
-            // return summe;
-        }
-
-//        pcl::PointXYZRGB truth;
-//        truth.x=pointcloud.pointclouds[1].second.points[indices[i]].x;
-//        truth.y=pointcloud.pointclouds[1].second.points[indices[i]].y;
-//        truth.z=pointcloud.pointclouds[1].second.points[indices[i]].z;
-//        truth.r=0;
-//        truth.g=0;
-//        truth.b=0;
-//        need_show_truth.points.emplace_back(truth);
-//        pcl::PointXYZRGB transformed;
-//        transformed.x=transform_last_use_particle.points[k].x;
-//        transformed.y=transform_last_use_particle.points[k].y;
-//        transformed.z=transform_last_use_particle.points[k].z;
-//        transformed.r=0;
-//        transformed.g=0;
-//        transformed.b=0;
-//        need_show_transformed.points.emplace_back(transformed);
-
     }
+    pcl::PointXYZRGB temp;
+    temp.x=transform_last_use_particle.points[k].x;
+    temp.y=transform_last_use_particle.points[k].y;
+    temp.z=transform_last_use_particle.points[k].z;
+    temp.r=0;
+    temp.g=0;
+    temp.b=255;
+    mutex->lock();
+    unmatched.points.emplace_back(temp);
+    add_marker_to_array(point_after_transform,marker_array,0,0,0,0.5);
+    mutex->unlock();
 
-    return summe;
+    return 0;
 }
-
+void Particle_Filter::add_point2pointcloud(LiDAR_PointCloud pointCloud)
+{
+    pcl::PointXYZRGB temp;
+    bool find=false;
+    int j;
+    for(int i=0;i<match.size();i++)
+    {
+        add_marker_to_array(pointclouds_Interval[1].second[match[i]],marker_array,0,0,255,0.5);
+        temp.x=pointCloud.pointclouds[1].second.points[match[i]].x;
+        temp.y=pointCloud.pointclouds[1].second.points[match[i]].y;
+        temp.z=pointCloud.pointclouds[1].second.points[match[i]].z;
+        temp.r=0;
+        temp.g=0;
+        temp.b=255;
+        need_show_truth.points.emplace_back(temp);
+    }
+    flag1=marker_array.markers.size();
+    for(int i=0;i<point_index.size();i++)
+    {
+        add_marker_to_array(pointclouds_Interval[1].second[point_index[i]],marker_array,255,0,0,0.5);
+        temp.x=pointCloud.pointclouds[1].second.points[point_index[i]].x;
+        temp.y=pointCloud.pointclouds[1].second.points[point_index[i]].y;
+        temp.z=pointCloud.pointclouds[1].second.points[point_index[i]].z;
+        temp.r=255;
+        temp.g=0;
+        temp.b=0;
+        need_show_transformed.points.emplace_back(temp);
+    }
+    flag2=marker_array.markers.size();
+    for(int i=0;i<pointCloud.pointclouds[1].second.points.size();i++)
+    {
+        for( j=0;j<match.size();j++)
+        {
+            if(i==match[j])
+            {break;}
+        }
+        if(j==match.size())
+        {
+            add_marker_to_array(pointclouds_Interval[1].second[i],marker_array,0,0,0,0.5);
+            temp.x=pointCloud.pointclouds[1].second.points[i].x;
+            temp.y=pointCloud.pointclouds[1].second.points[i].y;
+            temp.z=pointCloud.pointclouds[1].second.points[i].z;
+            temp.r=0;
+            temp.g=0;
+            temp.b=0;
+            need_show_truth.points.emplace_back(temp);
+        }
+    }
+}
 Eigen::Vector3d Particle_Filter::estimation_position(vector<pair<Eigen::Vector3d,Eigen::Vector3d>>est_pos,Eigen::Vector3d &initial_pos)
 {
     Eigen::Vector4d pos;
@@ -651,8 +836,35 @@ Eigen::Vector3d Particle_Filter::estimation_position(vector<pair<Eigen::Vector3d
 IntervalVector Particle_Filter::IntervalrotationMatrixtoEulerAngle(IntervalMatrix & matrix)
 {
     Interval roll ,pitch ,yaw;
+    Interval roll1 ,pitch1 ,yaw1;
     IntervalVector temp(3,Interval(0));
     Interval sy= sqrt(matrix[0][0]*matrix[0][0]+matrix[1][0]*matrix[1][0]);
+//    if(matrix[2][0].ub()<1)
+//    {
+//        if(matrix[2][0].lb()>-1)
+//        {
+//            pitch=asin(-matrix[2][0]);
+//            yaw= atan2(matrix[1][0],matrix[0][0]);
+//            roll= atan2(matrix[2][1],matrix[2][2]);
+//        }
+//        else
+//        {
+//            pitch=+M_PI/2;
+//            yaw= -atan2(-matrix[1][2], matrix[1][1]);
+//            roll= Interval(0);
+//        }
+//    }
+//    else
+//    {
+//        pitch= - M_PI/2;
+//        yaw= atan2(-matrix[1][2], matrix[1][1]);
+//        roll = Interval(0);
+//    }
+
+//            pitch=-asin(matrix[2][0]);
+//            yaw= atan2(matrix[2][1],matrix[2][2]);
+//            roll= atan2(matrix[1][0],matrix[0][0]);
+//
     if(sy.ub()<1e-6)
     {
         roll=atan2(-matrix[1][2],matrix[1][1]);
@@ -666,13 +878,16 @@ IntervalVector Particle_Filter::IntervalrotationMatrixtoEulerAngle(IntervalMatri
         pitch=atan2(-matrix[2][0],sy);
         yaw=atan2(matrix[1][0],matrix[0][0]);
     }
-    temp[0]=roll*180/M_PI;
-    temp[1]=pitch*180/M_PI;
-    temp[2]=yaw*180/M_PI;
+
+
+    temp[0]=roll;
+    temp[1]=pitch;
+    temp[2]=yaw;
+    cout<< temp<<endl;
     return temp;
 }
 
-void Particle_Filter::pointcloud_show( int argc,char **argv,pcl::PointCloud<pcl::PointXYZ> &match)
+void Particle_Filter::pointcloud_show( int argc,char **argv)
 {
     ros::init(argc,argv,"Pointcloud_compare");
     ros::NodeHandle nh;
@@ -681,31 +896,10 @@ void Particle_Filter::pointcloud_show( int argc,char **argv,pcl::PointCloud<pcl:
     sensor_msgs::PointCloud2 output1;
     sensor_msgs::PointCloud2 output2;
 
-    //add points to pointcloud(truth)
-    for (int i = 0; i < match.points.size(); ++i) {
-        pcl::PointXYZRGB temp;
-        temp.x=match.points[i].x;
-        temp.y=match.points[i].y;
-        temp.z=match.points[i].z;
-        temp.r=255;
-        temp.g=0;
-        temp.b=0;
-        need_show_truth.points.emplace_back(temp);
-    }
-    //add points to pointcloud(transformed)
-    for (int i = 0; i < transform_last_use_particle.points.size(); ++i) {
-        pcl::PointXYZRGB temp;
-        temp.x=transform_last_use_particle.points[i].x;
-        temp.y=transform_last_use_particle.points[i].y;
-        temp.z=transform_last_use_particle.points[i].z;
-        temp.r=0;
-        temp.g=0;
-        temp.b=255;
-        need_show_transformed.points.emplace_back(temp);
-    }
-
     pcl::toROSMsg(need_show_transformed,output1);
     pcl::toROSMsg(need_show_truth,output2);
+//    pcl::toROSMsg(matched,output1);
+//    pcl::toROSMsg(unmatched,output2);
     output1.header.frame_id="map";
     output2.header.frame_id="map";
     ros::Rate loop_rate(1);

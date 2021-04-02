@@ -3,7 +3,29 @@
 Eigen::Vector3d rotationMatrixtoEulerAngle(Eigen::Matrix3d & matrix)
 {
     Eigen::Vector3d euler_t;
-    euler_t=matrix.eulerAngles(2,1,0);
+    //euler_t=matrix.eulerAngles(2,1,0);
+    //euler_t= euler_t*57.29578;
+   if(matrix(2,0)<1)
+   {
+       if(matrix(2,0)>-1)
+       {
+           euler_t[1]=asin(-matrix(2,0));
+           euler_t[2]=atan2(matrix(1,0), matrix(0,0));
+           euler_t[0]=atan2(matrix(2,1), matrix(2,2));
+       }
+       else
+       {
+           euler_t[1]=+M_PI/2;
+           euler_t[2]=-atan2(-matrix(1,2), matrix(1,1));
+           euler_t[0]=0;
+       }
+   }
+   else
+   {
+       euler_t[1]=-M_PI/2;
+       euler_t[2]=atan2(-matrix(1,2), matrix(1,1));
+       euler_t[0]=0;
+   }
     return euler_t;
 }
 
@@ -150,17 +172,20 @@ int main(int argc, char ** argv)
     //camera->imu
     Eigen::Matrix4d transform2=Eigen::Matrix4d::Identity();
 
-    transform1=measurement.tf_mms_cam();
+    //transform1=measurement.tf_mms_cam();
     //transform2=measurement.tf_cam_imu();
-    transform2=measurement.tf_cam_velodyne();
+    //transform2=measurement.tf_cam_velodyne();
 
     Eigen::Matrix4d relativ_transformation_imu=Eigen::Matrix4d::Identity();
     measurement.transform_gt_imu(transform1,transform2,parameters);
     relativ_transformation_imu=measurement.calculate_relative_transformation_imu(parameters);
     Eigen::Matrix4d relativ_transformation_mms=Eigen::Matrix4d::Identity();
+    rotation= imu.vel2rotatation(parameters.get_START_COMPUTE_TIME(), parameters.get_END_COMPUTE_TIME());
     cout<<relativ_transformation_imu<<endl;
-    //relativ_transformation_mms=transform1.inverse()*relativ_transformation_imu;
-    //relativ_transformation_mms=transform2.inverse()*relativ_transformation_mms;
+    cout<<rotation<<endl;
+    relativ_transformation_mms=transform1.inverse()*relativ_transformation_imu;
+    relativ_transformation_mms=transform2.inverse()*relativ_transformation_mms;
+    //cout<<relativ_transformation_mms<<endl;
     Eigen::Matrix3d rot=relativ_transformation_imu.block(0,0,3,3);
     Eigen::Vector3d e=rotationMatrixtoEulerAngle(rot);
     cout<<e<<endl;

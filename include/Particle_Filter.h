@@ -65,6 +65,16 @@ private:
     int c=1;
     int d=1000;
     bool first=true;
+    vector<int> match;
+    pcl::PointCloud<pcl::PointXYZRGB> matched;
+    pcl::PointCloud<pcl::PointXYZRGB> unmatched;
+    vector<int> point_index;
+    vector<int> unmatch;
+    int flag1;
+    int flag2;
+
+    int max_value=0;
+    int min_value=99999;
 
 public:
 
@@ -78,7 +88,7 @@ public:
     double calculate_weight(LiDAR_PointCloud &pointcloud, vector<int> &indices, vector<bool> &if_matched, IntervalVector & point_after_transform,int k,std::mutex* mutex);
     Eigen::Vector3d estimation_position(vector<pair<Eigen::Vector3d,Eigen::Vector3d>>est_pos,Eigen::Vector3d &initial_pos);
     IntervalVector IntervalrotationMatrixtoEulerAngle(IntervalMatrix & matrix);
-    void pointcloud_show( int argc,char **argv,pcl::PointCloud<pcl::PointXYZ> &match);
+    void pointcloud_show( int argc,char **argv);
     void show_boxes(int argc, char** argv);
     void build_LiDAR_Interval(Parameters &parameters,LiDAR_PointCloud &pointcloud);
     void intervalCalcuateThread(pcl::PointCloud<pcl::PointXYZ> *pc, int start_index, int end_index,double rho_uncertinty,double phi_uncertinty,double theta_uncertinty,double horizontal_angle_uncertainty,double vertical_angle_uncertainty,std::mutex* mutex);
@@ -87,7 +97,10 @@ public:
     void pointxyz2pointxyzi(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pc2,pcl::PointCloud<pcl::PointXYZI> &temp);
     void add_marker_to_array(IntervalVector point,visualization_msgs::MarkerArray &marker_array, double r, double g,
                                               double b, double a);
-
+    void show_pointcloud_original(int argc, char** argv,LiDAR_PointCloud & pointcloud);
+    void add_point2pointcloud(LiDAR_PointCloud pointCloud);
+    void update_max(int s);
+    void update_min(int s);
 
 };
 
