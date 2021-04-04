@@ -4,7 +4,6 @@
 #include <IMU.h>
 IntervalMatrix IMU::vel2rotatation(double start_compute_time, double  end_compute_time)
 {
-    int stamp_index=vel_data.size()-1;
     Interval current_stamp;
     IntervalVector current_vel(3);
     IntervalMatrix overall_rotation=Matrix::eye(3);
@@ -36,11 +35,41 @@ IntervalMatrix IMU::vel2rotatation(double start_compute_time, double  end_comput
         delta_t=min(vel_data[i].first.ub(),end_compute_time)-max(start_compute_time,vel_data[i].first.lb());
         IntervalMatrix Matrix_temp(3,3);
         Matrix_temp=calculate_rodrigues_rotation(vel_data[i].second,delta_t);
-        Matrix_temp &=IntervalMatrix(3,3,Interval(-1,1));
+        //Matrix_temp &=IntervalMatrix(3,3,Interval(-1,1));
         overall_rotation*=Matrix_temp;
     }
     overall_rotation &=IntervalMatrix(3,3,Interval(-1,1));
     return overall_rotation;
+//    int stamp_index=0;
+//    Interval current_stamp;
+//    IntervalVector current_vel(3);
+//    IntervalMatrix overall_rotation=Matrix::eye(3);
+//    double delta_t;
+//    //find the corresponding stamp of imu
+//    while(!this->vel_data[stamp_index].first.contains(start_compute_time))
+//    {
+//        stamp_index++;
+//    }
+//    if(this->vel_data[stamp_index].first.contains(start_compute_time))
+//    {
+//        current_stamp=this->vel_data[stamp_index].first;
+//        current_vel=this->vel_data[stamp_index].second;
+//    }
+//    //calculate delta t, whether the required time is between two stamps
+//    do {
+//        delta_t=min(current_stamp.ub(),end_compute_time)-max(start_compute_time,current_stamp.lb());
+//        IntervalMatrix Matrix_temp(3,3);
+//        Matrix_temp=calculate_rodrigues_rotation(current_vel,delta_t);
+//        Matrix_temp &=IntervalMatrix(3,3,Interval(-1,1));
+//        overall_rotation*=Matrix_temp;
+//        stamp_index++;
+//        if(stamp_index>vel_data.size()) break;
+//        current_stamp=this->vel_data[stamp_index].first;
+//        current_vel=this->vel_data[stamp_index].second;
+//    }while (current_stamp.lb()<end_compute_time);
+//    //cout<<overall_rotation<<endl;
+//    overall_rotation &=IntervalMatrix(3,3,Interval(-1,1));
+//    return overall_rotation;
 }
 
 Eigen::Vector3d IMU::acc2pose(double start_compute_time, double  end_compute_time, Eigen::Vector3d start_vel)
@@ -246,28 +275,37 @@ void IMU::add_vel_measurement(sensor_msgs::ImuConstPtr  imupointer, Parameters &
         acceleration[0]=imupointer->linear_acceleration.x;
         acceleration[1]=imupointer->linear_acceleration.y;
         acceleration[2]=imupointer->linear_acceleration.z;
+//
+//    if(imupointer->header.stamp.toSec()-start_time>0 && imupointer->header.stamp.toSec()-start_time<0.00200 &&imupointer->header.stamp.toSec()<end_time)
+//    {
+//        this->vel_data.emplace_back(make_pair(Interval(imupointer->header.stamp.toSec()-0.00200, imupointer->header.stamp.toSec()), actual_vel));
+//        this->vel_actual_data.emplace_back(make_pair(Interval(imupointer->header.stamp.toSec()-0.00200, imupointer->header.stamp.toSec()),angular_velocity));
+//        this->acc_data.emplace_back(make_pair(Interval(imupointer->header.stamp.toSec()-0.00200, imupointer->header.stamp.toSec()), actual_acc));
+//        this->acc_actual_data.emplace_back(make_pair(Interval(imupointer->header.stamp.toSec()-0.00200, imupointer->header.stamp.toSec()),acceleration));
+//    }
+//    else if (imupointer->header.stamp.toSec()-start_time>0.00200 && imupointer->header.stamp.toSec()<end_time)
+//    {
+//        this->vel_data.emplace_back(make_pair(Interval(vel_data.back().first.ub(), imupointer->header.stamp.toSec()), actual_vel));
+//        this->vel_actual_data.emplace_back(make_pair(Interval(vel_actual_data.back().first.ub(), imupointer->header.stamp.toSec()),angular_velocity));
+//        this->acc_data.emplace_back(make_pair(Interval(acc_data.back().first.ub(), imupointer->header.stamp.toSec()), actual_acc));
+//        this->acc_actual_data.emplace_back(make_pair(Interval(acc_actual_data.back().first.ub(), imupointer->header.stamp.toSec()),acceleration));
+//    }
+//    else if (imupointer->header.stamp.toSec()-end_time<0.00200 && imupointer->header.stamp.toSec()-end_time>0)
+//    {
+//        this->vel_data.emplace_back(make_pair(Interval(vel_data.back().first.ub(), imupointer->header.stamp.toSec()), actual_vel));
+//        this->vel_actual_data.emplace_back(make_pair(Interval(vel_actual_data.back().first.ub(), imupointer->header.stamp.toSec()),angular_velocity));
+//        this->acc_data.emplace_back(make_pair(Interval(acc_data.back().first.ub(), imupointer->header.stamp.toSec()), actual_acc));
+//        this->acc_actual_data.emplace_back(make_pair(Interval(acc_actual_data.back().first.ub(), imupointer->header.stamp.toSec()),acceleration));
+//    }
 
-    if(imupointer->header.stamp.toSec()-start_time>0 && imupointer->header.stamp.toSec()-start_time<0.00200 &&imupointer->header.stamp.toSec()<end_time)
-    {
-        this->vel_data.emplace_back(make_pair(Interval(imupointer->header.stamp.toSec()-0.00200, imupointer->header.stamp.toSec()), actual_vel));
-        this->vel_actual_data.emplace_back(make_pair(Interval(imupointer->header.stamp.toSec()-0.00200, imupointer->header.stamp.toSec()),angular_velocity));
-        this->acc_data.emplace_back(make_pair(Interval(imupointer->header.stamp.toSec()-0.00200, imupointer->header.stamp.toSec()), actual_acc));
-        this->acc_actual_data.emplace_back(make_pair(Interval(imupointer->header.stamp.toSec()-0.00200, imupointer->header.stamp.toSec()),acceleration));
-    }
-    else if (imupointer->header.stamp.toSec()-start_time>0.00200 && imupointer->header.stamp.toSec()<end_time)
-    {
-        this->vel_data.emplace_back(make_pair(Interval(vel_data.back().first.ub(), imupointer->header.stamp.toSec()), actual_vel));
-        this->vel_actual_data.emplace_back(make_pair(Interval(vel_actual_data.back().first.ub(), imupointer->header.stamp.toSec()),angular_velocity));
-        this->acc_data.emplace_back(make_pair(Interval(acc_data.back().first.ub(), imupointer->header.stamp.toSec()), actual_acc));
-        this->acc_actual_data.emplace_back(make_pair(Interval(acc_actual_data.back().first.ub(), imupointer->header.stamp.toSec()),acceleration));
-    }
-    else if (imupointer->header.stamp.toSec()-end_time<0.00200 && imupointer->header.stamp.toSec()-end_time>0)
-    {
-        this->vel_data.emplace_back(make_pair(Interval(vel_data.back().first.ub(), imupointer->header.stamp.toSec()), actual_vel));
-        this->vel_actual_data.emplace_back(make_pair(Interval(vel_actual_data.back().first.ub(), imupointer->header.stamp.toSec()),angular_velocity));
-        this->acc_data.emplace_back(make_pair(Interval(acc_data.back().first.ub(), imupointer->header.stamp.toSec()), actual_acc));
-        this->acc_actual_data.emplace_back(make_pair(Interval(acc_actual_data.back().first.ub(), imupointer->header.stamp.toSec()),acceleration));
-    }
+if(vel_data.empty())
+{
+    this->vel_data.emplace_back(make_pair(Interval(imupointer->header.stamp.toSec()), actual_vel));
+}
+else
+{
+    this->vel_data.emplace_back(make_pair(Interval(vel_data.back().first.ub(), imupointer->header.stamp.toSec()), actual_vel));
+}
 
 }
 
@@ -546,7 +584,6 @@ IntervalMatrix IMU::calculate_rodrigues_rotation(IntervalVector angular_vel, dou
     skew_symmetric_matrix2[2][1]=angular_vel[2]*angular_vel[1];
 
     theta=sqrt(sqr(angular_vel[0])+sqr(angular_vel[1])+sqr(angular_vel[2]));
-
     double term_a_lb=sin(theta.ub())/theta.ub();
     //Situation 1 when the lb of term a greater then the maximal feasible vaule of sin(theta)/theta
     if(term_a_lb>=1.)

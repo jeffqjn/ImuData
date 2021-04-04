@@ -166,35 +166,61 @@ int main(int argc, char ** argv)
                 }
             }
     }
-
+    rotation= imu.vel2rotatation(parameters.get_START_COMPUTE_TIME(), parameters.get_END_COMPUTE_TIME());
     //mms->camera
     Eigen::Matrix4d transform1=Eigen::Matrix4d::Identity();
     //camera->imu
     Eigen::Matrix4d transform2=Eigen::Matrix4d::Identity();
-
-    //transform1=measurement.tf_mms_cam();
-    //transform2=measurement.tf_cam_imu();
+    transform1=measurement.tf_mms_cam();
+    transform2=measurement.tf_cam_imu();
     //transform2=measurement.tf_cam_velodyne();
-
+//    Eigen::Matrix4d left= (transform1*transform2);
+//    Eigen::Matrix4d right= (transform1*transform2).inverse();
     Eigen::Matrix4d relativ_transformation_imu=Eigen::Matrix4d::Identity();
     measurement.transform_gt_imu(transform1,transform2,parameters);
     relativ_transformation_imu=measurement.calculate_relative_transformation_imu(parameters);
+    Eigen::Matrix4d after;
+    //after=transform2.inverse()*(transform1.inverse()*relativ_transformation_imu*transform1)*transform2;
     Eigen::Matrix4d relativ_transformation_mms=Eigen::Matrix4d::Identity();
-    rotation= imu.vel2rotatation(parameters.get_START_COMPUTE_TIME(), parameters.get_END_COMPUTE_TIME());
-    cout<<relativ_transformation_imu<<endl;
-    cout<<rotation<<endl;
+
+    //cout<<relativ_transformation_imu<<endl;
+
     relativ_transformation_mms=transform1.inverse()*relativ_transformation_imu;
     relativ_transformation_mms=transform2.inverse()*relativ_transformation_mms;
-    //cout<<relativ_transformation_mms<<endl;
+    cout<<relativ_transformation_imu<<endl;
     Eigen::Matrix3d rot=relativ_transformation_imu.block(0,0,3,3);
     Eigen::Vector3d e=rotationMatrixtoEulerAngle(rot);
-    cout<<e<<endl;
     cout<<relativ_transformation_imu<<endl;
-
+    cout<<e<<endl;
     //Testing!!!
-    bool erg;
-    erg=rotation[0][0].contains(relativ_transformation_mms(0,0))&rotation[0][1].contains(relativ_transformation_mms(0,1))&rotation[0][2].contains(relativ_transformation_mms(0,2))&rotation[1][0].contains(relativ_transformation_mms(1,0))&rotation[1][1].contains(relativ_transformation_mms(1,1))&rotation[1][2].contains(relativ_transformation_mms(1,2))&rotation[2][0].contains(relativ_transformation_mms(2,0))&rotation[2][1].contains(relativ_transformation_mms(2,1))&rotation[2][2].contains(relativ_transformation_mms(2,2));
-    cout<<erg<<endl;
+    vector<vector<bool>> test;
+    vector<bool> temp;
+    temp.emplace_back(rotation[0][0].contains(relativ_transformation_imu(0,0)));
+    temp.emplace_back(rotation[0][1].contains(relativ_transformation_imu(0,1)));
+    temp.emplace_back(rotation[0][2].contains(relativ_transformation_imu(0,2)));
+    test.emplace_back(temp);
+    temp.clear();
+
+    temp.emplace_back(rotation[1][0].contains(relativ_transformation_imu(1,0)));
+    temp.emplace_back(rotation[1][1].contains(relativ_transformation_imu(1,1)));
+    temp.emplace_back(rotation[1][2].contains(relativ_transformation_imu(1,2)));
+    test.emplace_back(temp);
+    temp.clear();
+
+    temp.emplace_back(rotation[2][0].contains(relativ_transformation_imu(2,0)));
+    temp.emplace_back(rotation[2][1].contains(relativ_transformation_imu(2,1)));
+    temp.emplace_back(rotation[2][2].contains(relativ_transformation_imu(2,2)));
+    test.emplace_back(temp);
+    temp.clear();
+
+    for( int i=0;i<3;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            cout<<test[i][j]<<" ";
+        }
+        cout<<endl;
+    }
     bag.close();
     return 0;
 }
