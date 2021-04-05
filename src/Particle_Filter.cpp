@@ -427,11 +427,15 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
     //use end_time to build KD-Tree
     tree_after_transform.setInputCloud(pointcloud.pointclouds[0].second.makeShared());
     build_LiDAR_Interval(parameters,pointcloud);
-    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> particle=generate_particle(box_6D,3,4,5,6,6,3);//233332 //345552
+    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> particle=generate_particle(box_6D,3,4,5,5,5,2);//233332 //345552
     vector<double> distance;
     vector<double> sums;
     long start,end;
     start= curTime();
+
+    //DEBUG
+    //    cout<<particle[1463].first<<endl;
+    //    cout<<particle[1463].second<<endl;
 
     int particle_size=particle.size();
     int point_cloud_size=pointcloud.pointclouds[1].second.points.size();
@@ -457,40 +461,27 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
 //        particle[j].second[0]=  -0.0623501;
 //        particle[j].second[1]= -0.00126607;
 //        particle[j].second[2]=  0.00118102;
-        //1213
+//2915
 //        particle[j].first[0]=0.000185705;
-//        particle[j].first[1]=-0.000251012;
+//        particle[j].first[1]=-0.000204645;
 //        particle[j].first[2]=-0.000670685;
 //
-//        particle[j].second[0]=  0.0561585;
-//        particle[j].second[1]= -0.0561585;
-//        particle[j].second[2]=  0;
-    //2122
-//        particle[j].first[0]=0.000247528;
-//        particle[j].first[1]=-0.000251012;
-//        particle[j].first[2]=-0.000744865;
-//
-//        particle[j].second[0]=  0.298986;
+//        particle[j].second[0]=-0.0561585;
 //        particle[j].second[1]=-0.0561585;
-//        particle[j].second[2]=  -0.197741;
-        //2915
-//        particle[j].first[0]=0.000247528;
-//        particle[j].first[1]=-0.00011191;
-//        particle[j].first[2]=-0.000707775;
-//
-//        particle[j].second[0]=  -0.0561585;
-//        particle[j].second[1]=0.298986;
 //        particle[j].second[2]=  0;
 
 
-        particle_q = Eigen::AngleAxisd(particle[j].first[0], Eigen::Vector3d::UnitX())
-                       * Eigen::AngleAxisd(particle[j].first[1], Eigen::Vector3d::UnitY())
-                       * Eigen::AngleAxisd(particle[j].first[2], Eigen::Vector3d::UnitZ());
-        double dis_q= particle_q.angularDistance(ground_truth);
-        double dis= sqrt( pow(particle[j].second[0]-(-0.0623501),2)+pow(particle[j].second[1]-(-0.00126607),2)+pow(particle[j].second[2]-(0.00118102),2));
+
+
+        //particle_q = Eigen::AngleAxisd(particle[j].first[0], Eigen::Vector3d::UnitX())
+        //               * Eigen::AngleAxisd(particle[j].first[1], Eigen::Vector3d::UnitY())
+        //               * Eigen::AngleAxisd(particle[j].first[2], Eigen::Vector3d::UnitZ());
+        //double dis_q= particle_q.angularDistance(ground_truth);
+        //double dis= sqrt( pow(particle[j].second[0]-(-0.0623501),2)+pow(particle[j].second[1]-(-0.00126607),2)+pow(particle[j].second[2]-(0.00118102),2));
 
         transform_use_particle(pointcloud.pointclouds[1].second,particle[j].first, particle[j].second);
 
+        //DEBUG
         //show_pointcloud_original(argc,argv,pointcloud);
 
         pcl::PointCloud<pcl::PointXYZI> temp;
@@ -518,16 +509,19 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
         {
             it->join();
         }
-//        cout<<matched.points.size()<<endl;
-//        cout<<unmatched.points.size()<<endl;
+
+        //DEBUG
+        //cout<<matched.points.size()<<endl;
+        //cout<<unmatched.points.size()<<endl;
         //cout<<summe<<endl;
         //add_point2pointcloud(pointcloud);
         //pointcloud_show_match(argc,argv);
         //show_boxes(argc,argv);
-//        cout<<particle[j].first<<endl;
-//        cout<<particle[j].second<<endl;
+        //cout<<particle[j].first<<endl;
+        //cout<<particle[j].second<<endl;
         //cout<<summe<<endl;
-        distance.emplace_back(sqrt(dis*dis+dis_q*dis_q));
+
+        //distance.emplace_back(sqrt(dis*dis+dis_q*dis_q));
         sums.emplace_back(summe);
         cout<<count++<<endl;
         update_max(summe,j);
@@ -535,12 +529,36 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
         pointclouds_Interval[1].second.clear();
         label_transformed.clear();
         summe=0;
+
     }
     cout<<max_value<<endl;
     cout<<max_index<<endl;
     cout<<min_value<<endl;
     cout<<min_index<<endl;
-    plot(distance,sums);
+    //plot(distance,sums);
+
+    double gesamt_sum=0;
+    for(double s : sums)
+    {
+        gesamt_sum+=s;
+    }
+    //normalization
+    vector<double> sums_normal(sums.size());
+    int k=0;
+    for(double s:sums)
+    {
+        sums_normal[k]=s/gesamt_sum;
+        k++;
+    }
+    //TODO
+    //resampling
+
+    //calculate average
+    //ground_truth compare
+    //GNSS integieren
+    //Random choose
+
+
     sort(weights.begin(),weights.end(),GreaterSort);
 
     //resampling
