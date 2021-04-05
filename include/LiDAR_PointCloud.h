@@ -34,7 +34,7 @@ public:
     Eigen::Matrix4d threshold_matrix= Eigen::Matrix4d::Identity ();
     Eigen::Matrix4d Template;
     pcl::PointCloud<pcl::PointXYZRGB> ground;
-
+    bool pointcloud_ready=false;
 
 
 public:
@@ -47,5 +47,6 @@ public:
     void show_pointcloud(int argc, char ** argv);
     void pointxyz2pointxyzi(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pc2,pcl::PointCloud<pcl::PointXYZI> &temp);
     void get_label(sensor_msgs::PointCloud2ConstPtr m,pcl::PointCloud<pcl::PointXYZI> &temp);
-    };
+
+};
 #endif //IMUDATA_LIDAR_POINTCLOUD_H

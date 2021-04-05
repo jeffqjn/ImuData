@@ -45,6 +45,7 @@ void LiDAR_PointCloud::show_pointcloud(int argc, char ** argv)
         loop_rate.sleep();
     }
 }
+
 void LiDAR_PointCloud::add_pointcloud(sensor_msgs::PointCloud2ConstPtr m, Parameters parameters,KdTree &kdTree ,int argc, char** argv) {
     pcl::PointCloud<pcl::PointXYZI> temp;
 
@@ -53,8 +54,6 @@ void LiDAR_PointCloud::add_pointcloud(sensor_msgs::PointCloud2ConstPtr m, Parame
         pcl::PointCloud<pcl::PointXYZ>::ConstPtr pc2;
         pc2 = cloud_convert(m);
         pointclouds.emplace_back(make_pair(m->header.stamp.toSec(),*pc2));
-        pointxyz2pointxyzi(pc2,temp);
-        get_label(m,temp);
     }
 }
 void LiDAR_PointCloud::pointxyz2pointxyzi(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pc2,pcl::PointCloud<pcl::PointXYZI> &temp)

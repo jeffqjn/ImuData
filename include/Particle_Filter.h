@@ -61,7 +61,8 @@ private:
     vector<bool> if_matched;
     vector<particle_weighted> weights;
     visualization_msgs::MarkerArray marker_array;
-    vector<int> label;
+    vector<int> label_transformed;
+    vector<int> label_matched;
     int c=1;
     int d=1000;
     bool first=true;
@@ -73,13 +74,15 @@ private:
     int flag1;
     int flag2;
 
-    int max_value=0;
-    int min_value=99999;
+    double max_value=0;
+    double min_value=99999;
+    int max_index;
+    int min_index;
 
 public:
 
 
-    vector<pair<Eigen::Vector3d,Eigen::Vector3d>> particle_filter_set_up(Parameters &parameters,IMU &imu, KdTree & kd, LiDAR_PointCloud &pointcloud ,int argc, char ** argv);
+    vector<pair<Eigen::Vector3d,Eigen::Vector3d>> particle_filter_set_up(Parameters &parameters,IMU &imu, KdTree & kd, LiDAR_PointCloud &pointcloud , Measurement &measurement,int argc, char ** argv);
     vector<pair<Eigen::Vector3d,Eigen::Vector3d>> generate_particle(IntervalVector box_6d, int num0,int num1, int num2, int num3, int num4, int num5);
     void transform_use_particle(pcl::PointCloud<pcl::PointXYZ> pointcloud, Eigen::Vector3d &angle, Eigen::Vector3d &translation);
     void transform_use_particle_Interval(vector<IntervalVector> pointcloud_interval, Eigen::Vector3d &angle, Eigen::Vector3d &translation,vector<IntervalVector> &after_transform_interval);
@@ -99,9 +102,10 @@ public:
                                               double b, double a);
     void show_pointcloud_original(int argc, char** argv,LiDAR_PointCloud & pointcloud);
     void add_point2pointcloud(LiDAR_PointCloud pointCloud);
-    void update_max(int s);
-    void update_min(int s);
-
+    void update_max(double s, int index);
+    void update_min(double s, int index);
+    vector<Eigen::Vector3d> get_ground_truth(Parameters &parameters, Measurement &measurement, IMU &imu);
+    void pointcloud_show_match( int argc,char **argv);
 };
 
 #endif //IMUDATA_PARTICLE_FILTER_H

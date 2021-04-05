@@ -287,6 +287,16 @@ void Particle_Filter::show_pointcloud_original(int argc, char** argv, LiDAR_Poin
         temp.b=255;
         need_show_transformed.points.emplace_back(temp);
     }
+//    for (int i = 0; i < pointcloud.pointclouds[1].second.points.size(); ++i) {
+//        pcl::PointXYZRGB temp;
+//        temp.x=pointcloud.pointclouds[1].second.points[i].x;
+//        temp.y=pointcloud.pointclouds[1].second.points[i].y;
+//        temp.z=pointcloud.pointclouds[1].second.points[i].z;
+//        temp.r=0;
+//        temp.g=0;
+//        temp.b=255;
+//        need_show_transformed.points.emplace_back(temp);
+//    }
     pointcloud_show(argc,argv);
 }
 vector<IntervalVector> intervalbuild_debug(vector<int> &ind, Parameters parameters, LiDAR_PointCloud pointcloud)
@@ -364,29 +374,62 @@ bool intersection_debug(vector<IntervalVector> &erg, IntervalVector & origin)
     }
     return temp;
 }
-vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_set_up(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,int argc, char ** argv){
+vector<Eigen::Vector3d> Particle_Filter::get_ground_truth(Parameters &parameters, Measurement &measurement, IMU &imu)
+{
+    IntervalMatrix rotation(3,3);
+    rotation= imu.vel2rotatation(parameters.get_START_COMPUTE_TIME(), parameters.get_END_COMPUTE_TIME());
+    //mms->camera
+    Eigen::Matrix4d transform1=Eigen::Matrix4d::Identity();
+    //camera->imu
+    Eigen::Matrix4d transform2=Eigen::Matrix4d::Identity();
+    transform1=measurement.tf_mms_cam();
+    transform2=measurement.tf_cam_imu();
+    Eigen::Matrix4d relativ_transformation_imu=Eigen::Matrix4d::Identity();
+    measurement.transform_gt_imu(transform1,transform2,parameters);
+    relativ_transformation_imu=measurement.calculate_relative_transformation_imu(parameters);
+    vector<vector<bool>> test;
+    vector<bool> temp;
+    temp.emplace_back(rotation[0][0].contains(relativ_transformation_imu(0,0)));
+    temp.emplace_back(rotation[0][1].contains(relativ_transformation_imu(0,1)));
+    temp.emplace_back(rotation[0][2].contains(relativ_transformation_imu(0,2)));
+    test.emplace_back(temp);
+    temp.clear();
 
-    int max_index;
+    temp.emplace_back(rotation[1][0].contains(relativ_transformation_imu(1,0)));
+    temp.emplace_back(rotation[1][1].contains(relativ_transformation_imu(1,1)));
+    temp.emplace_back(rotation[1][2].contains(relativ_transformation_imu(1,2)));
+    test.emplace_back(temp);
+    temp.clear();
+
+    temp.emplace_back(rotation[2][0].contains(relativ_transformation_imu(2,0)));
+    temp.emplace_back(rotation[2][1].contains(relativ_transformation_imu(2,1)));
+    temp.emplace_back(rotation[2][2].contains(relativ_transformation_imu(2,2)));
+    test.emplace_back(temp);
+    temp.clear();
+
+    for( int i=0;i<3;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            cout<<test[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<" "<<endl;
+}
+vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_set_up(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,Measurement &measurement,int argc, char ** argv){
+
     int count=0;
 
     pointclouds_Interval.resize(2);
     //6 Dimension transformation IntervalVector
     IntervalVector box_6D=create_6D_box(imu,pointcloud);
-
     //use end_time to build KD-Tree
-
     tree_after_transform.setInputCloud(pointcloud.pointclouds[0].second.makeShared());
-
-
-    IntervalVector origin(3);
-    origin[0]=Interval(6.17750277441837, 7.273870844470488);
-    origin[1]=Interval(-6.063900988926803, -4.77126008637618);
-    origin[2]=Interval(-1.217827272155988, 0.2968505383831934);
-    //bool erg2= intersection_debug(erg1,origin);
-
     build_LiDAR_Interval(parameters,pointcloud);
-    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> particle=generate_particle(box_6D,3,3,5,5,5,3);//233332
-
+    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> particle=generate_particle(box_6D,3,4,5,6,6,3);//233332 //345552
+    vector<double> distance;
+    vector<double> sums;
     long start,end;
     start= curTime();
 
@@ -395,52 +438,64 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
     pcl::PointCloud<pcl::PointXYZ> estimation;
     vector<IntervalVector> estimation_interval;
 
+    Eigen::Quaterniond ground_truth;
+    Eigen::Quaterniond particle_q;
+    ground_truth = Eigen::AngleAxisd(-2.33287e-05, Eigen::Vector3d::UnitX())
+        * Eigen::AngleAxisd(-0.000138494, Eigen::Vector3d::UnitY())
+        * Eigen::AngleAxisd(-0.000794976, Eigen::Vector3d::UnitZ());
+
+    pcl::PointCloud<pcl::PointXYZI> temp_matched;
+    pointxyz2pointxyzi(pointcloud.pointclouds[0].second.makeShared(),temp_matched);
+    get_label(temp_matched,label_matched);
     for(int j=0;j<particle_size;j++)
     {
 //        Ground_Truth
-//        particle[j].first[0]=0.00087549;
-//        particle[j].first[1]=0.0001677642;
-//        particle[j].first[2]=-3.4754e-05;
+//        particle[j].first[0]=-2.33287e-05;
+//        particle[j].first[1]=-0.000138494;
+//        particle[j].first[2]=-0.000794976;
 //
-//        particle[j].second[0]=0.061511;
-//        particle[j].second[1]=0.00145935;
-//        particle[j].second[2]=0.00493282;
+//        particle[j].second[0]=  -0.0623501;
+//        particle[j].second[1]= -0.00126607;
+//        particle[j].second[2]=  0.00118102;
+        //1213
+//        particle[j].first[0]=0.000185705;
+//        particle[j].first[1]=-0.000251012;
+//        particle[j].first[2]=-0.000670685;
+//
+//        particle[j].second[0]=  0.0561585;
+//        particle[j].second[1]= -0.0561585;
+//        particle[j].second[2]=  0;
+    //2122
+//        particle[j].first[0]=0.000247528;
+//        particle[j].first[1]=-0.000251012;
+//        particle[j].first[2]=-0.000744865;
+//
+//        particle[j].second[0]=  0.298986;
+//        particle[j].second[1]=-0.0561585;
+//        particle[j].second[2]=  -0.197741;
+        //2915
+//        particle[j].first[0]=0.000247528;
+//        particle[j].first[1]=-0.00011191;
+//        particle[j].first[2]=-0.000707775;
+//
+//        particle[j].second[0]=  -0.0561585;
+//        particle[j].second[1]=0.298986;
+//        particle[j].second[2]=  0;
 
-//        particle[j].first[0]=3.14074;
-//        particle[j].first[1]= -3.14143;
-//        particle[j].first[2]=-3.14155;
-//
-//
-//        particle[j].second[0]= -0.0619196;
-//        particle[j].second[1]=-0.0014209;
-//        particle[j].second[2]=-0.00497539;
 
-//        particle[j].first[0]=4.18063e-05;
-//        particle[j].first[1]=-0.000161487;
-//        particle[j].first[2]=-0.000861295;
-//
-//
-//        particle[j].second[0]= -0.0619186;
-//        particle[j].second[1]= -0.00146307;
-//        particle[j].second[2]=-0.00498842;
-        particle[j].first[0]=-2.33287e-05;
-        particle[j].first[1]=-0.000138494;
-        particle[j].first[2]=-0.000794976;
+        particle_q = Eigen::AngleAxisd(particle[j].first[0], Eigen::Vector3d::UnitX())
+                       * Eigen::AngleAxisd(particle[j].first[1], Eigen::Vector3d::UnitY())
+                       * Eigen::AngleAxisd(particle[j].first[2], Eigen::Vector3d::UnitZ());
+        double dis_q= particle_q.angularDistance(ground_truth);
+        double dis= sqrt( pow(particle[j].second[0]-(-0.0623501),2)+pow(particle[j].second[1]-(-0.00126607),2)+pow(particle[j].second[2]-(0.00118102),2));
 
-
-        particle[j].second[0]=  -0.0623501;
-        particle[j].second[1]= -0.00126607;
-        particle[j].second[2]=0.00118102;
-        //DEBUG
-        //bool erg=box_6D[0].contains(particle[j].first[0]) && box_6D[1].contains(particle[j].first[1]) && box_6D[2].contains(particle[j].first[2]);
-        //cout<<erg<<endl;
         transform_use_particle(pointcloud.pointclouds[1].second,particle[j].first, particle[j].second);
 
         //show_pointcloud_original(argc,argv,pointcloud);
 
         pcl::PointCloud<pcl::PointXYZI> temp;
         pointxyz2pointxyzi(transform_last_use_particle.makeShared(),temp);
-        get_label(temp,label);
+        get_label(temp,label_transformed);
 
         build_LiDAR_Interval(parameters,pointcloud);
         //parallelism
@@ -463,30 +518,29 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
         {
             it->join();
         }
+//        cout<<matched.points.size()<<endl;
+//        cout<<unmatched.points.size()<<endl;
+        //cout<<summe<<endl;
         //add_point2pointcloud(pointcloud);
-        //pointcloud_show(argc,argv);
+        //pointcloud_show_match(argc,argv);
         //show_boxes(argc,argv);
-        cout<<particle[j].first<<endl;
-        cout<<particle[j].second<<endl;
-        cout<<summe<<endl;
+//        cout<<particle[j].first<<endl;
+//        cout<<particle[j].second<<endl;
+        //cout<<summe<<endl;
+        distance.emplace_back(sqrt(dis*dis+dis_q*dis_q));
+        sums.emplace_back(summe);
         cout<<count++<<endl;
-        update_max(summe);
-        update_min(summe);
-        weights.emplace_back(particle_weighted(j,summe));
-        pointclouds_Interval[0].second.clear();
-        label.clear();
-        marker_array.markers.clear();
-        for(int l=0; l<if_matched.size();l++)
-        {
-            if_matched[l]= false;
-        }
+        update_max(summe,j);
+        update_min(summe,j);
+        pointclouds_Interval[1].second.clear();
+        label_transformed.clear();
         summe=0;
-        //cout<<marker_array.markers.size()<<endl;
-
-
     }
     cout<<max_value<<endl;
+    cout<<max_index<<endl;
     cout<<min_value<<endl;
+    cout<<min_index<<endl;
+    plot(distance,sums);
     sort(weights.begin(),weights.end(),GreaterSort);
 
     //resampling
@@ -558,18 +612,20 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
     imu.vel_data.erase(imu.vel_data.begin(),imu.vel_data.end()-2);
     return result;
 }
-void Particle_Filter::update_max(int s)
+void Particle_Filter::update_max(double s, int index)
 {
     if(s>max_value)
     {
         max_value=s;
+        max_index=index;
     }
 }
-void Particle_Filter::update_min(int s)
+void Particle_Filter::update_min(double s, int index)
 {
     if(s<min_value)
     {
         min_value=s;
+        min_index=index;
     }
 }
 void Particle_Filter::particleCalcuateThread(LiDAR_PointCloud *pointCloud,int start_index, int end_index,std::mutex* mutex)
@@ -586,9 +642,20 @@ void Particle_Filter::particleCalcuateThread(LiDAR_PointCloud *pointCloud,int st
             indices.clear();
             distances.clear();
         }
-        //DEBUG
-        first= true;
-        c=3;
+        else
+        {
+            pcl::PointXYZRGB temp;
+            temp.x=transform_last_use_particle.points[i].x;
+            temp.y=transform_last_use_particle.points[i].y;
+            temp.z=transform_last_use_particle.points[i].z;
+            temp.r=0;
+            temp.g=0;
+            temp.b=255;
+            mutex->lock();
+            unmatched.points.emplace_back(temp);
+            //add_marker_to_array(point_after_transform,marker_array,0,0,0,0.5);
+            mutex->unlock();
+        }
     }
 }
 
@@ -719,7 +786,8 @@ IntervalVector Particle_Filter::create_6D_box(IMU imu, LiDAR_PointCloud pointclo
 double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<int> &indices, vector<bool> &if_matched, IntervalVector & point_after_transform,int k, std::mutex* mutex)
 {
     double volume=0;
-    double sum=0;
+    double s=0;
+    bool b_matched=false;
 
     //cout<<indices.size()<<endl;
     for(int i=0;i<indices.size();i++) {
@@ -729,46 +797,65 @@ double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<in
             bool y = current[1].intersects(point_after_transform[1]);
             bool z = current[2].intersects(point_after_transform[2]);
             if (x && y && z /*&& !if_matched[indices[i]]&&(intersect_volume>=volume/8)*/) {
-
-//                if(label[k]==1)
-//                {
-//                    sum=sum+0.5;
-//                }
-//                else
-//                {
-//                    //cout<<summe<<endl;
-//                    sum=sum+1;
-//                }
+                if(label_transformed[k]==1 && label_matched[indices[i]]==1)
+                {
+                    s=s+0.5;
+                    pcl::PointXYZRGB temp;
+                    temp.x=transform_last_use_particle.points[k].x;
+                    temp.y=transform_last_use_particle.points[k].y;
+                    temp.z=transform_last_use_particle.points[k].z;
+                    temp.r=255;
+                    temp.g=0;
+                    temp.b=0;
+                    mutex->lock();
+                    matched.points.emplace_back(temp);
+                    add_marker_to_array(point_after_transform,marker_array,255,0,0,0.5);
+                    add_marker_to_array(current,marker_array,0,255,0,0.5);
+                    mutex->unlock();
+                    b_matched= true;
+                    break;
+                }
+                else if(label_transformed[k]==0 && label_matched[indices[i]]==0)
+                {
+                    s=s+2;
+                    pcl::PointXYZRGB temp;
+                    temp.x=transform_last_use_particle.points[k].x;
+                    temp.y=transform_last_use_particle.points[k].y;
+                    temp.z=transform_last_use_particle.points[k].z;
+                    temp.r=255;
+                    temp.g=0;
+                    temp.b=0;
+                    mutex->lock();
+                    matched.points.emplace_back(temp);
+                    add_marker_to_array(point_after_transform,marker_array,255,0,0,0.5);
+                    add_marker_to_array(current,marker_array,0,255,0,0.5);
+                    mutex->unlock();
+                    b_matched=true;
+                    break;
+                }
+                else
+                {
+                    s=s+0;
+                }
                 // add matched point to matched array
-
-//                pcl::PointXYZRGB temp;
-//                temp.x=transform_last_use_particle.points[k].x;
-//                temp.y=transform_last_use_particle.points[k].y;
-//                temp.z=transform_last_use_particle.points[k].z;
-//                temp.r=255;
-//                temp.g=0;
-//                temp.b=0;
-//                mutex->lock();
-//                matched.points.emplace_back(temp);
-//                add_marker_to_array(point_after_transform,marker_array,255,0,0,0.5);
-//                add_marker_to_array(current,marker_array,0,255,0,0.5);
-//                mutex->unlock();
-                return 1;
             }
     }
-//    pcl::PointXYZRGB temp;
-//    temp.x=transform_last_use_particle.points[k].x;
-//    temp.y=transform_last_use_particle.points[k].y;
-//    temp.z=transform_last_use_particle.points[k].z;
-//    temp.r=0;
-//    temp.g=0;
-//    temp.b=255;
-//    mutex->lock();
-//    unmatched.points.emplace_back(temp);
-//    add_marker_to_array(point_after_transform,marker_array,0,0,0,0.5);
-//    mutex->unlock();
+    if(!b_matched)
+    {
+        pcl::PointXYZRGB temp;
+        temp.x=transform_last_use_particle.points[k].x;
+        temp.y=transform_last_use_particle.points[k].y;
+        temp.z=transform_last_use_particle.points[k].z;
+        temp.r=0;
+        temp.g=0;
+        temp.b=255;
+        mutex->lock();
+        unmatched.points.emplace_back(temp);
+        add_marker_to_array(point_after_transform,marker_array,0,0,0,0.5);
+        mutex->unlock();
+    }
 
-    return 0;
+    return s;
 }
 void Particle_Filter::add_point2pointcloud(LiDAR_PointCloud pointCloud)
 {
@@ -891,8 +978,28 @@ IntervalVector Particle_Filter::IntervalrotationMatrixtoEulerAngle(IntervalMatri
     temp[0]=roll;
     temp[1]=pitch;
     temp[2]=yaw;
-    cout<< temp<<endl;
     return temp;
+}
+void Particle_Filter::pointcloud_show_match( int argc,char **argv)
+{
+    ros::init(argc,argv,"Pointcloud_compare");
+    ros::NodeHandle nh;
+    ros::Publisher pcl_pub=nh.advertise<sensor_msgs::PointCloud2>("matched_output",1);
+    ros::Publisher truth_pub=nh.advertise<sensor_msgs::PointCloud2>("unmatched_output",1);
+    sensor_msgs::PointCloud2 output1;
+    sensor_msgs::PointCloud2 output2;
+    pcl::toROSMsg(matched,output1);
+    pcl::toROSMsg(unmatched,output2);
+    output1.header.frame_id="map";
+    output2.header.frame_id="map";
+    ros::Rate loop_rate(1);
+    while(ros::ok())
+    {
+        pcl_pub.publish(output1);
+        truth_pub.publish(output2);
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
 }
 
 void Particle_Filter::pointcloud_show( int argc,char **argv)
@@ -901,6 +1008,8 @@ void Particle_Filter::pointcloud_show( int argc,char **argv)
     ros::NodeHandle nh;
     ros::Publisher pcl_pub=nh.advertise<sensor_msgs::PointCloud2>("transformed_output",1);
     ros::Publisher truth_pub=nh.advertise<sensor_msgs::PointCloud2>("truth_output",1);
+//    ros::Publisher pcl_pub=nh.advertise<sensor_msgs::PointCloud2>("matched_output",1);
+//    ros::Publisher truth_pub=nh.advertise<sensor_msgs::PointCloud2>("unmatched_output",1);
     sensor_msgs::PointCloud2 output1;
     sensor_msgs::PointCloud2 output2;
 

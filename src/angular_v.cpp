@@ -147,12 +147,14 @@ int main(int argc, char ** argv)
                     {
                         if(points.data_exist())
                         {
+
                             //TODO change the function and variable name
                             vector<pair<Eigen::Vector3d, Eigen::Vector3d>> temp = PF.particle_filter_set_up(
-                                            parameters, imu, kd, points,argc,argv);
+                                    parameters, imu, kd, points, measurement, argc, argv);
                             est_pos.emplace_back(make_pair(temp[0].first, temp[0].second));
                             get_two = false;
                             index = 1;
+
                         }
                     }
                 }
