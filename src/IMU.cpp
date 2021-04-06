@@ -297,7 +297,10 @@ void IMU::add_vel_measurement(sensor_msgs::ImuConstPtr  imupointer, Parameters &
 //        this->acc_data.emplace_back(make_pair(Interval(acc_data.back().first.ub(), imupointer->header.stamp.toSec()), actual_acc));
 //        this->acc_actual_data.emplace_back(make_pair(Interval(acc_actual_data.back().first.ub(), imupointer->header.stamp.toSec()),acceleration));
 //    }
-
+if(imupointer->header.stamp.toSec()>parameters.get_END_COMPUTE_TIME())
+{
+    angular_velocity_ready=true;
+}
 if(vel_data.empty())
 {
     this->vel_data.emplace_back(make_pair(Interval(imupointer->header.stamp.toSec()), actual_vel));
@@ -308,7 +311,10 @@ else
 }
 
 }
-
+bool IMU::angular_velocity_if_ready()
+{
+    return angular_velocity_ready;
+}
 void IMU::calculate_ground_truth(Parameters parameters,LiDAR_PointCloud pointCloud,Eigen::Matrix4d transform1,Eigen::Matrix4d transform2)
 {
     double start_compute_time=parameters.get_START_COMPUTE_TIME();

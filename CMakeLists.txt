@@ -177,7 +177,10 @@ link_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(ImuData src/angular_v.cpp src/IMU.cpp src/Measurement.cpp include/angular_v.h src/Utility.cpp src/Parameters.cpp src/LiDAR_PointCloud.cpp  include/Parameters.h include/LiDAR_PointCloud.h include/Measurement.h include/IMU.h src/KdTree.cpp include/KdTree.h include/Particle_Filter.h src/Particle_Filter.cpp include/CloudBin.h include/CloudSegment.h include/FloorSegment.h src/CloudBin.cpp src/CloudSegment.cpp src/FloorSegment.cpp)
+
+add_executable(ImuData  src/IMU.cpp src/Measurement.cpp  src/Utility.cpp src/Parameters.cpp src/LiDAR_PointCloud.cpp  include/Parameters.h include/LiDAR_PointCloud.h include/Measurement.h include/IMU.h src/KdTree.cpp include/KdTree.h include/Particle_Filter.h src/Particle_Filter.cpp include/CloudBin.h include/CloudSegment.h include/FloorSegment.h src/CloudBin.cpp src/CloudSegment.cpp src/FloorSegment.cpp include/angular_v.h src/angular_v.cpp)
+#add_executable(ImuData ${PROJECT_SOURCES} ${PROJECT_HEADERS})
+
 add_definitions(${PCL_DEFINITIONS})
 
 ## Rename C++ executable without prefix

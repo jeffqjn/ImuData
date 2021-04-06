@@ -47,6 +47,6 @@ public:
     void show_pointcloud(int argc, char ** argv);
     void pointxyz2pointxyzi(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pc2,pcl::PointCloud<pcl::PointXYZI> &temp);
     void get_label(sensor_msgs::PointCloud2ConstPtr m,pcl::PointCloud<pcl::PointXYZI> &temp);
-
+    bool pointcloud_if_ready();
 };
 #endif //IMUDATA_LIDAR_POINTCLOUD_H

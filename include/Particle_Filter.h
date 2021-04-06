@@ -38,13 +38,16 @@ class Particle_Filter
 public:
     struct particle_weighted
     {
-        particle_weighted(int i, double w)
+        particle_weighted(int index, double w, double w_n=0)
         {
-            index=i;
+            particle_index=index;
             weight=w;
+            weight_normal=w_n;
         }
-        int index;
+        int particle_index;
         double weight;
+        double weight_normal;
+
     };
 private:
 
@@ -78,6 +81,7 @@ private:
     double min_value=99999;
     int max_index;
     int min_index;
+    int start_index=-1, end_index=-1;
 
 public:
 
@@ -106,6 +110,7 @@ public:
     void update_min(double s, int index);
     vector<Eigen::Vector3d> get_ground_truth(Parameters &parameters, Measurement &measurement, IMU &imu);
     void pointcloud_show_match( int argc,char **argv);
+    void get_start_end_cloud_index(LiDAR_PointCloud &pointcloud ,Parameters & parameters,int &start_index, int &end_index);
 };
 
 #endif //IMUDATA_PARTICLE_FILTER_H

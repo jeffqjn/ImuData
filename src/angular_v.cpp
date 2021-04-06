@@ -128,6 +128,9 @@ int main(int argc, char ** argv)
     start_time=parameters.get_START_COMPUTE_TIME();
     end_time=parameters.get_END_COMPUTE_TIME();
 
+    cout<<"beginning to process bag file"<<endl;
+    cout<<"calculate period: "<<parameters.get_START_COMPUTE_TIME()<<" -> "<<parameters.get_END_COMPUTE_TIME()<<endl;
+
     BOOST_FOREACH( rosbag::MessageInstance const  m, view)
     {
             if (parameters.if_in_time_period(m))
@@ -143,32 +146,25 @@ int main(int argc, char ** argv)
                 else if (if_imu_data(m))
                 {
                     imu.add_vel_measurement(m.instantiate<sensor_msgs::Imu>(),parameters);
-                    if(get_two)
+                    if(points.pointcloud_ready && imu.angular_velocity_ready)
                     {
-                        if(points.data_exist())
-                        {
-
                             //TODO change the function and variable name
                             vector<pair<Eigen::Vector3d, Eigen::Vector3d>> temp = PF.particle_filter_set_up(
                                     parameters, imu, kd, points, measurement, argc, argv);
                             est_pos.emplace_back(make_pair(temp[0].first, temp[0].second));
                             get_two = false;
                             index = 1;
-
-                        }
                     }
                 }
                 else if (if_velodyne_points(m))
                 {
                     points.add_pointcloud(m.instantiate<sensor_msgs::PointCloud2>(),parameters,kd,argc,argv);
-                    if(++index%2==0)
-                    {
-                        get_two= true;
-                    }
                 }
             }
     }
     rotation= imu.vel2rotatation(parameters.get_START_COMPUTE_TIME(), parameters.get_END_COMPUTE_TIME());
+    cout<<rotation<<endl;
+    PF.IntervalrotationMatrixtoEulerAngle(rotation);
     //mms->camera
     Eigen::Matrix4d transform1=Eigen::Matrix4d::Identity();
     //camera->imu
