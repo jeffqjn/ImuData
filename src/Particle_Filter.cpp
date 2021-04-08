@@ -3,7 +3,7 @@ void Particle_Filter::add_marker_to_array(IntervalVector point,
                          visualization_msgs::MarkerArray &marker_array, double r, double g,
                          double b, double a){
     visualization_msgs::Marker marker;
-    marker.header.frame_id = "velodyne";
+    marker.header.frame_id = "map";
     marker.header.stamp = ros::Time();
     marker.ns = "my_namespace";
     marker.id = marker_array.markers.size();
@@ -35,25 +35,35 @@ void Particle_Filter::show_boxes(int argc, char** argv)
 {
     ros::init(argc,argv,"boxes_show");
     ros::NodeHandle nh;
-    visualization_msgs::MarkerArray  temp;
+    visualization_msgs::MarkerArray  temp1;
+    visualization_msgs::MarkerArray  temp2;
+    visualization_msgs::MarkerArray  temp3;
+    visualization_msgs::MarkerArray  temp4;
+    visualization_msgs::MarkerArray  temp5;
     int count=1000;
-    for(int i=0;i<marker_array.markers.size();i++)
+    for(int i=0;i<count;i++)
     {
-        if(count<0)
-        {
-            break;
-        }
-        temp.markers.emplace_back(marker_array.markers[i]);
-        temp.markers.emplace_back(marker_array.markers[i+flag1]);
-        temp.markers.emplace_back(marker_array.markers[i+flag2]);
-        count--;
+        temp1.markers.emplace_back(unmatched_marker_array.markers[i]);
+        temp2.markers.emplace_back(matched_marker_array.markers[i]);
+        temp3.markers.emplace_back(truth_marker_array.markers[i]);
+        temp4.markers.emplace_back(boden_truth_marker_array.markers[i]);
+        temp5.markers.emplace_back(boden_transformed_marker_array.markers[i]);
     }
 
-    ros::Publisher boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("boxes_output",0);
+    ros::Publisher unmateched_boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("unmatched_boxes_output",0);
+    ros::Publisher matched_boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("matched_boxes_output",0);
+    ros::Publisher truth_boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("truth_boxes_output",0);
+    ros::Publisher boden_truth_boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("boden_truth_boxes_output",0);
+    ros::Publisher boden_transformed_boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("boden_transformed_boxes_output",0);
+
     ros::Rate loop_rate(0.1);
     while(ros::ok())
     {
-        boxes_pub.publish(temp);
+        unmateched_boxes_pub.publish(temp1);
+        matched_boxes_pub.publish(temp2);
+        truth_boxes_pub.publish(temp3);
+        boden_truth_boxes_pub.publish(temp4);
+        boden_transformed_boxes_pub.publish(temp5);
         ros::spinOnce();
         loop_rate.sleep();
     }
@@ -277,16 +287,16 @@ void Particle_Filter::show_pointcloud_original(int argc, char** argv, LiDAR_Poin
         need_show_truth.points.emplace_back(temp);
     }
     //add points to pointcloud(transformed)
-    for (int i = 0; i < transform_last_use_particle.points.size(); ++i) {
-        pcl::PointXYZRGB temp;
-        temp.x=transform_last_use_particle.points[i].x;
-        temp.y=transform_last_use_particle.points[i].y;
-        temp.z=transform_last_use_particle.points[i].z;
-        temp.r=0;
-        temp.g=0;
-        temp.b=255;
-        need_show_transformed.points.emplace_back(temp);
-    }
+//    for (int i = 0; i < transform_last_use_particle.points.size(); ++i) {
+//        pcl::PointXYZRGB temp;
+//        temp.x=transform_last_use_particle.points[i].x;
+//        temp.y=transform_last_use_particle.points[i].y;
+//        temp.z=transform_last_use_particle.points[i].z;
+//        temp.r=0;
+//        temp.g=0;
+//        temp.b=255;
+//        need_show_transformed.points.emplace_back(temp);
+//    }
 //    for (int i = 0; i < pointcloud.pointclouds[1].second.points.size(); ++i) {
 //        pcl::PointXYZRGB temp;
 //        temp.x=pointcloud.pointclouds[1].second.points[i].x;
@@ -444,6 +454,57 @@ void Particle_Filter::get_start_end_cloud_index(LiDAR_PointCloud &pointcloud ,Pa
         end_index=pointcloud.pointclouds.size()-1;
     }
 }
+void Particle_Filter::show_all(int argc, char ** argv, LiDAR_PointCloud &pointcloud)
+{
+    //original start_index pointcloud
+    pcl::PointCloud<pcl::PointXYZ> * match;
+    match= &pointcloud.pointclouds[start_index].second;
+
+    //add points to pointcloud(truth)
+    for (int i = 0; i < match->points.size(); ++i) {
+        pcl::PointXYZRGB temp;
+        temp.x=match->points[i].x;
+        temp.y=match->points[i].y;
+        temp.z=match->points[i].z;
+        temp.r=255;
+        temp.g=0;
+        temp.b=0;
+        need_show_truth.points.emplace_back(temp);
+    }
+    for(int i=0;i<label_matched.size();i++)
+    {
+        if(label_matched[i]==1)
+        {
+            pcl::PointXYZRGB temp;
+            temp.x=pointcloud.pointclouds[0].second.points[i].x;
+            temp.y=pointcloud.pointclouds[0].second.points[i].y;
+            temp.z=pointcloud.pointclouds[0].second.points[i].z;
+            temp.r=255;
+            temp.g=0;
+            temp.b=0;
+            boden_truth.points.emplace_back(temp);
+            add_marker_to_array(pointclouds_Interval[0].second[i],boden_truth_marker_array,255,0,0,0.5);
+        }
+    }
+    for(int i=0;i<label_transformed.size();i++)
+    {
+        if(label_transformed[i]==1)
+        {
+            pcl::PointXYZRGB temp;
+            temp.x=transform_last_use_particle.points[i].x;
+            temp.y=transform_last_use_particle.points[i].y;
+            temp.z=transform_last_use_particle.points[i].z;
+            temp.r=0;
+            temp.g=255;
+            temp.b=0;
+            boden_transformed.points.emplace_back(temp);
+            add_marker_to_array(pointclouds_Interval[1].second[i],boden_transformed_marker_array,255,0,0,0.5);
+        }
+    }
+
+    pointcloud_show(argc, argv);
+
+}
 vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_set_up(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,Measurement &measurement,int argc, char ** argv){
 
     int count=0;
@@ -452,20 +513,18 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
     get_start_end_cloud_index(pointcloud,parameters,start_index, end_index);
     //6 Dimension transformation IntervalVector
     IntervalVector box_6D=create_6D_box(imu,pointcloud);
+   //vector<Eigen::Vector3d> temp=get_ground_truth(parameters,measurement,imu);
+
     //use end_time to build KD-Tree
     //tree_after_transform.setInputCloud(pointcloud.pointclouds[0].second.makeShared());
     tree_after_transform.setInputCloud(pointcloud.pointclouds[start_index].second.makeShared());
     build_LiDAR_Interval(parameters,pointcloud);
-    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> particle=generate_particle(box_6D,2,3,5,15,15 ,2);//233332 //345552
+    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> particle=generate_particle(box_6D,3,4,5,5,5 ,2);//233332 //345552    //234772
     vector<double> distance;
     vector<particle_weighted> sums;
     long start,end;
     start= curTime();
-
     //DEBUG
-    //    cout<<particle[1463].first<<endl;
-    //    cout<<particle[1463].second<<endl;
-
     int particle_size=particle.size();
     int point_cloud_size=pointcloud.pointclouds[end_index].second.points.size();
     pcl::PointCloud<pcl::PointXYZ> estimation;
@@ -484,35 +543,30 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
     for(int j=0;j<particle_size;j++)
     {
 //        Ground_Truth
-//        particle[j].first[0]=-2.33287e-05;
-//        particle[j].first[1]=-0.000138494;
-//        particle[j].first[2]=-0.000794976;
-//
-//        particle[j].second[0]=  -0.0623501;
-//        particle[j].second[1]= -0.00126607;
-//        particle[j].second[2]=  0.00118102;
+        particle[j].first[0]=-2.33287e-05;
+        particle[j].first[1]=-0.000138494;
+        particle[j].first[2]=-0.000794976;
+
+        particle[j].second[0]=  -0.0623501;
+        particle[j].second[1]= -0.00126607;
+        particle[j].second[2]=  0.00118102;
 //2915
-        particle[j].first[0]=-0.00293548;
-        particle[j].first[1]=0.00692661;
-        particle[j].first[2]=0.0191461;
-
-        particle[j].second[0]=-1.61129;
-        particle[j].second[1]=-2.30754;
-        particle[j].second[2]=  0;
-
-
-
-
+//        particle[j].first[0]=0.000167698;
+//        particle[j].first[1]=-0.00018689;
+//        particle[j].first[2]=-0.000769856;
+//
+//        particle[j].second[0]=0.0390272;
+//        particle[j].second[1]=0.180604;
+//        particle[j].second[2]=  0;
         //particle_q = Eigen::AngleAxisd(particle[j].first[0], Eigen::Vector3d::UnitX())
         //               * Eigen::AngleAxisd(particle[j].first[1], Eigen::Vector3d::UnitY())
         //               * Eigen::AngleAxisd(particle[j].first[2], Eigen::Vector3d::UnitZ());
         //double dis_q= particle_q.angularDistance(ground_truth);
         //double dis= sqrt( pow(particle[j].second[0]-(-0.0623501),2)+pow(particle[j].second[1]-(-0.00126607),2)+pow(particle[j].second[2]-(0.00118102),2));
-
         transform_use_particle(pointcloud.pointclouds[end_index].second,particle[j].first, particle[j].second);
 
         //DEBUG
-        show_pointcloud_original(argc,argv,pointcloud);
+        //show_pointcloud_original(argc,argv,pointcloud);
 
         pcl::PointCloud<pcl::PointXYZI> temp;
         pointxyz2pointxyzi(transform_last_use_particle.makeShared(),temp);
@@ -546,7 +600,7 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
         //cout<<summe<<endl;
         //add_point2pointcloud(pointcloud);
         //pointcloud_show_match(argc,argv);
-        //show_boxes(argc,argv);
+        show_all(argc,argv,pointcloud);
         //cout<<particle[j].first<<endl;
         //cout<<particle[j].second<<endl;
         //cout<<summe<<endl;
@@ -560,7 +614,11 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
         label_transformed.clear();
         matched.clear();
         unmatched.clear();
-        marker_array.markers.clear();
+        unmatched_marker_array.markers.clear();
+        matched_marker_array.markers.clear();
+        truth_marker_array.markers.clear();
+        boden_truth_marker_array.markers.clear();
+        boden_transformed_marker_array.markers.clear();
         summe=0;
 
     }
@@ -750,7 +808,7 @@ void Particle_Filter::particleCalcuateThread(LiDAR_PointCloud *pointCloud,int st
             temp.b=255;
             mutex->lock();
             unmatched.points.emplace_back(temp);
-            //add_marker_to_array(point_after_transform,marker_array,0,0,0,0.5);
+            add_marker_to_array(pointclouds_Interval[1].second[i],unmatched_marker_array,0,0,0,0.5);
             mutex->unlock();
         }
     }
@@ -868,7 +926,6 @@ IntervalVector Particle_Filter::create_6D_box(IMU imu, LiDAR_PointCloud pointclo
     Interval velocity_interval_xy(-4.16,13.8);
     Interval velocity_interval_z(-2.,2.);
     rotation=imu.vel2rotatation(start_time,end_time);
-
     Euler_Angle=IntervalrotationMatrixtoEulerAngle(rotation);
 
     box_6D[3]=velocity_interval_xy*(end_time-start_time);
@@ -906,8 +963,8 @@ double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<in
                     temp.b=0;
                     mutex->lock();
                     matched.points.emplace_back(temp);
-                    add_marker_to_array(point_after_transform,marker_array,255,0,0,0.5);
-                    add_marker_to_array(current,marker_array,0,255,0,0.5);
+                    add_marker_to_array(point_after_transform,matched_marker_array,255,0,0,0.5);
+                    add_marker_to_array(current,truth_marker_array,0,255,0,0.5);
                     mutex->unlock();
                     b_matched= true;
                     break;
@@ -924,8 +981,8 @@ double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<in
                     temp.b=0;
                     mutex->lock();
                     matched.points.emplace_back(temp);
-                    add_marker_to_array(point_after_transform,marker_array,255,0,0,0.5);
-                    add_marker_to_array(current,marker_array,0,255,0,0.5);
+                    add_marker_to_array(point_after_transform,matched_marker_array,255,0,0,0.5);
+                    add_marker_to_array(current,truth_marker_array,0,255,0,0.5);
                     mutex->unlock();
                     b_matched=true;
                     break;
@@ -948,61 +1005,68 @@ double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<in
         temp.b=255;
         mutex->lock();
         unmatched.points.emplace_back(temp);
-        add_marker_to_array(point_after_transform,marker_array,0,0,0,0.5);
+        add_marker_to_array(point_after_transform,unmatched_marker_array,0,0,0,0.5);
         mutex->unlock();
+        for(int i=0;i<indices.size();i++)
+        {
+            mutex->lock();
+            add_marker_to_array(pointclouds_Interval[0].second[indices[i]],truth_marker_array,0,0,0,0.5);
+            mutex->unlock();
+        }
+        add_marker_to_array(point_after_transform,unmatched_marker_array,0,0,0,0.5);
     }
 
     return s;
 }
-void Particle_Filter::add_point2pointcloud(LiDAR_PointCloud pointCloud)
-{
-    pcl::PointXYZRGB temp;
-    bool find=false;
-    int j;
-    for(int i=0;i<match.size();i++)
-    {
-        add_marker_to_array(pointclouds_Interval[1].second[match[i]],marker_array,0,0,255,0.5);
-        temp.x=pointCloud.pointclouds[1].second.points[match[i]].x;
-        temp.y=pointCloud.pointclouds[1].second.points[match[i]].y;
-        temp.z=pointCloud.pointclouds[1].second.points[match[i]].z;
-        temp.r=0;
-        temp.g=0;
-        temp.b=255;
-        need_show_truth.points.emplace_back(temp);
-    }
-    flag1=marker_array.markers.size();
-    for(int i=0;i<point_index.size();i++)
-    {
-        add_marker_to_array(pointclouds_Interval[1].second[point_index[i]],marker_array,255,0,0,0.5);
-        temp.x=pointCloud.pointclouds[1].second.points[point_index[i]].x;
-        temp.y=pointCloud.pointclouds[1].second.points[point_index[i]].y;
-        temp.z=pointCloud.pointclouds[1].second.points[point_index[i]].z;
-        temp.r=255;
-        temp.g=0;
-        temp.b=0;
-        need_show_transformed.points.emplace_back(temp);
-    }
-    flag2=marker_array.markers.size();
-    for(int i=0;i<pointCloud.pointclouds[1].second.points.size();i++)
-    {
-        for( j=0;j<match.size();j++)
-        {
-            if(i==match[j])
-            {break;}
-        }
-        if(j==match.size())
-        {
-            add_marker_to_array(pointclouds_Interval[1].second[i],marker_array,0,0,0,0.5);
-            temp.x=pointCloud.pointclouds[1].second.points[i].x;
-            temp.y=pointCloud.pointclouds[1].second.points[i].y;
-            temp.z=pointCloud.pointclouds[1].second.points[i].z;
-            temp.r=0;
-            temp.g=0;
-            temp.b=0;
-            need_show_truth.points.emplace_back(temp);
-        }
-    }
-}
+//void Particle_Filter::add_point2pointcloud(LiDAR_PointCloud pointCloud)
+//{
+//    pcl::PointXYZRGB temp;
+//    bool find=false;
+//    int j;
+//    for(int i=0;i<match.size();i++)
+//    {
+//        add_marker_to_array(pointclouds_Interval[1].second[match[i]],marker_array,0,0,255,0.5);
+//        temp.x=pointCloud.pointclouds[1].second.points[match[i]].x;
+//        temp.y=pointCloud.pointclouds[1].second.points[match[i]].y;
+//        temp.z=pointCloud.pointclouds[1].second.points[match[i]].z;
+//        temp.r=0;
+//        temp.g=0;
+//        temp.b=255;
+//        need_show_truth.points.emplace_back(temp);
+//    }
+//    flag1=marker_array.markers.size();
+//    for(int i=0;i<point_index.size();i++)
+//    {
+//        add_marker_to_array(pointclouds_Interval[1].second[point_index[i]],marker_array,255,0,0,0.5);
+//        temp.x=pointCloud.pointclouds[1].second.points[point_index[i]].x;
+//        temp.y=pointCloud.pointclouds[1].second.points[point_index[i]].y;
+//        temp.z=pointCloud.pointclouds[1].second.points[point_index[i]].z;
+//        temp.r=255;
+//        temp.g=0;
+//        temp.b=0;
+//        need_show_transformed.points.emplace_back(temp);
+//    }
+//    flag2=marker_array.markers.size();
+//    for(int i=0;i<pointCloud.pointclouds[1].second.points.size();i++)
+//    {
+//        for( j=0;j<match.size();j++)
+//        {
+//            if(i==match[j])
+//            {break;}
+//        }
+//        if(j==match.size())
+//        {
+//            add_marker_to_array(pointclouds_Interval[1].second[i],marker_array,0,0,0,0.5);
+//            temp.x=pointCloud.pointclouds[1].second.points[i].x;
+//            temp.y=pointCloud.pointclouds[1].second.points[i].y;
+//            temp.z=pointCloud.pointclouds[1].second.points[i].z;
+//            temp.r=0;
+//            temp.g=0;
+//            temp.b=0;
+//            need_show_truth.points.emplace_back(temp);
+//        }
+//    }
+//}
 Eigen::Vector3d Particle_Filter::estimation_position(vector<pair<Eigen::Vector3d,Eigen::Vector3d>>est_pos,Eigen::Vector3d &initial_pos)
 {
     Eigen::Vector4d pos;
@@ -1104,24 +1168,62 @@ void Particle_Filter::pointcloud_show( int argc,char **argv)
 {
     ros::init(argc,argv,"Pointcloud_compare");
     ros::NodeHandle nh;
-    ros::Publisher pcl_pub=nh.advertise<sensor_msgs::PointCloud2>("transformed_output",1);
+
+    ros::Publisher transformed_matched_pub=nh.advertise<sensor_msgs::PointCloud2>("transformed_matched",1);
+    ros::Publisher transformed_unmatched_pub=nh.advertise<sensor_msgs::PointCloud2>("transformed_unmatched",1);
     ros::Publisher truth_pub=nh.advertise<sensor_msgs::PointCloud2>("truth_output",1);
-//    ros::Publisher pcl_pub=nh.advertise<sensor_msgs::PointCloud2>("matched_output",1);
-//    ros::Publisher truth_pub=nh.advertise<sensor_msgs::PointCloud2>("unmatched_output",1);
+    ros::Publisher boden_truth_pub=nh.advertise<sensor_msgs::PointCloud2>("boden_truth_output",1);
+    ros::Publisher boden_transformed_pub=nh.advertise<sensor_msgs::PointCloud2>("boden_transformed_output",1);
+    ros::Publisher unmateched_boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("unmatched_boxes_output",0);
+    ros::Publisher matched_boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("matched_boxes_output",0);
+    ros::Publisher truth_boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("truth_boxes_output",0);
+    ros::Publisher boden_truth_boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("boden_truth_boxes_output",0);
+    ros::Publisher boden_transformed_boxes_pub=nh.advertise<visualization_msgs::MarkerArray>("boden_transformed_boxes_output",0);
+
     sensor_msgs::PointCloud2 output1;
     sensor_msgs::PointCloud2 output2;
+    sensor_msgs::PointCloud2 output3;
+    sensor_msgs::PointCloud2 output4;
+    sensor_msgs::PointCloud2 output5;
+    visualization_msgs::MarkerArray  temp1;
+    visualization_msgs::MarkerArray  temp2;
+    visualization_msgs::MarkerArray  temp3;
+    visualization_msgs::MarkerArray  temp4;
+    visualization_msgs::MarkerArray  temp5;
 
-    pcl::toROSMsg(need_show_transformed,output1);
-    pcl::toROSMsg(need_show_truth,output2);
-//    pcl::toROSMsg(matched,output1);
-//    pcl::toROSMsg(unmatched,output2);
+    pcl::toROSMsg(matched,output1);
+    pcl::toROSMsg(unmatched,output2);
+    pcl::toROSMsg(need_show_truth,output3);
+    pcl::toROSMsg(boden_truth,output4);
+    pcl::toROSMsg(boden_transformed,output5);
     output1.header.frame_id="map";
     output2.header.frame_id="map";
+    output3.header.frame_id="map";
+    output4.header.frame_id="map";
+    output5.header.frame_id="map";
     ros::Rate loop_rate(1);
+
+    int count=1000;
+    for(int i=0;i<count;i++)
+    {
+        temp1.markers.emplace_back(unmatched_marker_array.markers[i]);
+        temp2.markers.emplace_back(matched_marker_array.markers[i]);
+        temp3.markers.emplace_back(truth_marker_array.markers[i]);
+        temp4.markers.emplace_back(boden_truth_marker_array.markers[i]);
+        temp5.markers.emplace_back(boden_transformed_marker_array.markers[i]);
+    }
     while(ros::ok())
     {
-        pcl_pub.publish(output1);
-        truth_pub.publish(output2);
+        transformed_matched_pub.publish(output1);
+        transformed_unmatched_pub.publish(output2);
+        truth_pub.publish(output3);
+        boden_truth_pub.publish(output4);
+        boden_transformed_pub.publish(output5);
+        unmateched_boxes_pub.publish(temp1);
+        matched_boxes_pub.publish(temp2);
+        truth_boxes_pub.publish(temp3);
+        boden_truth_boxes_pub.publish(temp4);
+        boden_transformed_boxes_pub.publish(temp5);
         ros::spinOnce();
         loop_rate.sleep();
     }

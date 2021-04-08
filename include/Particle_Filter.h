@@ -63,7 +63,11 @@ private:
     double summe=0;
     vector<bool> if_matched;
     vector<particle_weighted> weights;
-    visualization_msgs::MarkerArray marker_array;
+    visualization_msgs::MarkerArray unmatched_marker_array;
+    visualization_msgs::MarkerArray matched_marker_array;
+    visualization_msgs::MarkerArray truth_marker_array;
+    visualization_msgs::MarkerArray boden_truth_marker_array;
+    visualization_msgs::MarkerArray boden_transformed_marker_array;
     vector<int> label_transformed;
     vector<int> label_matched;
     int c=1;
@@ -72,6 +76,8 @@ private:
     vector<int> match;
     pcl::PointCloud<pcl::PointXYZRGB> matched;
     pcl::PointCloud<pcl::PointXYZRGB> unmatched;
+    pcl::PointCloud<pcl::PointXYZRGB> boden_truth;
+    pcl::PointCloud<pcl::PointXYZRGB> boden_transformed;
     vector<int> point_index;
     vector<int> unmatch;
     int flag1;
@@ -111,6 +117,7 @@ public:
     vector<Eigen::Vector3d> get_ground_truth(Parameters &parameters, Measurement &measurement, IMU &imu);
     void pointcloud_show_match( int argc,char **argv);
     void get_start_end_cloud_index(LiDAR_PointCloud &pointcloud ,Parameters & parameters,int &start_index, int &end_index);
+    void show_all(int argc, char ** argv, LiDAR_PointCloud &pointcloud);
 };
 
 #endif //IMUDATA_PARTICLE_FILTER_H
