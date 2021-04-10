@@ -83,11 +83,19 @@ private:
     int flag1;
     int flag2;
 
+    double gesamte_sums=0;
+    int particle_number=0;
     double max_value=0;
     double min_value=99999;
     int max_index;
     int min_index;
     int start_index=-1, end_index=-1;
+    double start_time, end_time;
+    int current_index_first, current_index_second;
+    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> particle;
+    vector<particle_weighted> sums;
+    vector<particle_weighted> resample_weight;
+    vector<pair<Eigen::Vector3d, Eigen::Vector3d>> result;
 
 public:
 
@@ -118,6 +126,13 @@ public:
     void pointcloud_show_match( int argc,char **argv);
     void get_start_end_cloud_index(LiDAR_PointCloud &pointcloud ,Parameters & parameters,int &start_index, int &end_index);
     void show_all(int argc, char ** argv, LiDAR_PointCloud &pointcloud);
+    void validate_result(Parameters &parameters, Measurement &measurement, IMU &imu);
+    void particle_filter_do(Parameters &parameters,IMU &imu, KdTree & kd, LiDAR_PointCloud &pointcloud , Measurement &measurement,int argc, char ** argv);
+    void particle_filter_parallelism(Parameters &parameters, LiDAR_PointCloud &pointcloud, int particle_index);
+    double calcualte_gesamte_sums();
+    void calcualte_normalized_sums(double gesamt_sum);
+    void resampling();
+    void calculate_average();
 };
 
 #endif //IMUDATA_PARTICLE_FILTER_H

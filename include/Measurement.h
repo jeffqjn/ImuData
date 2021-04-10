@@ -27,8 +27,8 @@ public:
     Eigen::Matrix4d tf_mms_cam();
     Eigen::Matrix4d tf_cam_imu();
     Eigen::Matrix4d tf_cam_velodyne();
-    void transform_gt_imu(Eigen::Matrix4d tf_mms_cam, Eigen::Matrix4d tf_cam_imu, Parameters parameters);
-    Eigen::Matrix4d calculate_relative_transformation_imu(Parameters parameters);
+    void transform_gt_imu(Eigen::Matrix4d tf_mms_cam, Eigen::Matrix4d tf_cam_imu, double start_time, double end_time);
+    Eigen::Matrix4d calculate_relative_transformation_imu(double start_time, double end_time);
 };
 
 #endif //IMUDATA_MEASUREMENT_H

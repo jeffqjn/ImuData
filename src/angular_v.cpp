@@ -175,8 +175,8 @@ int main(int argc, char ** argv)
 //    Eigen::Matrix4d left= (transform1*transform2);
 //    Eigen::Matrix4d right= (transform1*transform2).inverse();
     Eigen::Matrix4d relativ_transformation_imu=Eigen::Matrix4d::Identity();
-    measurement.transform_gt_imu(transform1,transform2,parameters);
-    relativ_transformation_imu=measurement.calculate_relative_transformation_imu(parameters);
+    //measurement.transform_gt_imu(transform1,transform2,parameters);
+    //relativ_transformation_imu=measurement.calculate_relative_transformation_imu(parameters);
     Eigen::Matrix4d after;
     //after=transform2.inverse()*(transform1.inverse()*relativ_transformation_imu*transform1)*transform2;
     Eigen::Matrix4d relativ_transformation_mms=Eigen::Matrix4d::Identity();
