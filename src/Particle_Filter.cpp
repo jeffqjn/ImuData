@@ -237,11 +237,50 @@ bool sort_test(pair<double,double> a, pair<double,double> b)
 {
     return a.second>b.second;
 }
+vector<double> Particle_Filter::calculate_distance()
+{
+    vector<double> temp;
+    for(int i=0;i<particle.size();i++)
+    {
+        double d= sqrt(pow(particle[i].second[0]-ground_truth[1][0],2)+pow(particle[i].second[1]-ground_truth[1][1],2)+pow(particle[i].second[2]-ground_truth[1][2],2));
+        temp.emplace_back(d);
+    }
+    return temp;
+}
 void Particle_Filter::plot_debug()
 {
     matplotlibcpp::figure_size(1200, 780);
     vector<double> dd;
     vector<double> s;
+    dd=calculate_distance();
+
+    vector<double> show_x;
+    vector<double> show_y;
+    vector<double> show_z;
+    vector<double> show_d_x;
+    vector<double> show_d_y;
+    vector<double> show_d_z;
+    int times=0;
+    while(times<=125) {
+        for (int i = 0; i < 500; i++) {
+            show_x.emplace_back(debug_sums[i+times*1500]);
+            show_d_x.emplace_back(dd[i+times*1500]);
+        }
+        for (int i = 500; i < 1000; i++) {
+            show_y.emplace_back(debug_sums[i+times*1500]);
+            show_d_y.emplace_back(dd[i+times*1500]);
+        }
+        for (int i = 1000; i < 1500; i++) {
+            show_z.emplace_back(debug_sums[i+times*1500]);
+            show_d_z.emplace_back(dd[i+times*1500]);
+        }
+        matplotlibcpp::scatter(show_d_x,show_x);
+        matplotlibcpp::scatter(show_d_y,show_y);
+        matplotlibcpp::scatter(show_d_z,show_z);
+        times++;
+    }
+    //TODO
+
 
     //matplotlibcpp::scatter(distance,sum);
     //sort(debug_sums[1].begin(), debug_sums[1].end(),sort_test);

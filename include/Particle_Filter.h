@@ -142,6 +142,7 @@ public:
     Eigen::Vector3d rotationMatrixtoEulerAngle(Eigen::Matrix3d & matrix);
     void plot_debug();
     void create_pic(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,Measurement &measurement,int argc, char ** argv);
+    vector<double> calculate_distance();
 };
 
 #endif //IMUDATA_PARTICLE_FILTER_H
