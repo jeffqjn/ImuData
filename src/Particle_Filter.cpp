@@ -228,10 +228,41 @@ void Particle_Filter::intervalCalcuateThread(pcl::PointCloud<pcl::PointXYZ> *pc,
 void plot(vector<double> & distance, vector<double> sum)
 {
     matplotlibcpp::figure_size(1200, 780);
-    matplotlibcpp::scatter(distance,sum);
+    //matplotlibcpp::scatter(distance,sum);
     matplotlibcpp::title("Sample figure");
     // Save the image (file format is determined by the extension)
     matplotlibcpp::show();
+}
+bool sort_test(pair<double,double> a, pair<double,double> b)
+{
+    return a.second>b.second;
+}
+void Particle_Filter::plot_debug()
+{
+    matplotlibcpp::figure_size(1200, 780);
+    vector<double> dd;
+    vector<double> s;
+
+    //matplotlibcpp::scatter(distance,sum);
+    //sort(debug_sums[1].begin(), debug_sums[1].end(),sort_test);
+
+//    for(int i=0;i<debug_sums.size();i++)
+//    {
+//        for(int j=0;j<debug_sums[i].size();j++)
+//        {
+//            dd.emplace_back(debug_sums[i][j].first);
+//            s.emplace_back(debug_sums[i][j].second);
+//            if(j==debug_sums[i].size()-1)
+//            {
+//                matplotlibcpp::scatter(dd,s);
+//                dd.clear();
+//                s.clear();
+//            }
+//        }
+//    }
+    matplotlibcpp::title("Sample figure");
+    // Save the image (file format is determined by the extension)
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/1.png");
 }
 bool GreaterSort(Particle_Filter::particle_weighted a, Particle_Filter::particle_weighted b)
 {
@@ -386,6 +417,7 @@ bool intersection_debug(vector<IntervalVector> &erg, IntervalVector & origin)
 }
 vector<Eigen::Vector3d> Particle_Filter::get_ground_truth(Parameters &parameters, Measurement &measurement, IMU &imu)
 {
+    vector<Eigen::Vector3d> erg;
     IntervalMatrix rotation(3,3);
     rotation= imu.vel2rotatation(start_time, end_time);
     //mms->camera
@@ -426,6 +458,43 @@ vector<Eigen::Vector3d> Particle_Filter::get_ground_truth(Parameters &parameters
         cout<<endl;
     }
     cout<<" "<<endl;
+    Eigen::Matrix3d r=relativ_transformation_imu.block(0,0,3,3);
+    Eigen::Vector3d ro=rotationMatrixtoEulerAngle(r);
+    Eigen::Vector3d ta;
+    ta[0]=relativ_transformation_imu(0,3);
+    ta[1]=relativ_transformation_imu(1,3);
+    ta[2]=relativ_transformation_imu(2,3);
+    erg.emplace_back(ro);
+    erg.emplace_back(ta);
+    return erg;
+}
+Eigen::Vector3d Particle_Filter::rotationMatrixtoEulerAngle(Eigen::Matrix3d & matrix)
+{
+    Eigen::Vector3d euler_t;
+    //euler_t=matrix.eulerAngles(2,1,0);
+    //euler_t= euler_t*57.29578;
+    if(matrix(2,0)<1)
+    {
+        if(matrix(2,0)>-1)
+        {
+            euler_t[1]=asin(-matrix(2,0));
+            euler_t[2]=atan2(matrix(1,0), matrix(0,0));
+            euler_t[0]=atan2(matrix(2,1), matrix(2,2));
+        }
+        else
+        {
+            euler_t[1]=+M_PI/2;
+            euler_t[2]=-atan2(-matrix(1,2), matrix(1,1));
+            euler_t[0]=0;
+        }
+    }
+    else
+    {
+        euler_t[1]=-M_PI/2;
+        euler_t[2]=atan2(-matrix(1,2), matrix(1,1));
+        euler_t[0]=0;
+    }
+    return euler_t;
 }
 void Particle_Filter::get_start_end_cloud_index(LiDAR_PointCloud &pointcloud ,Parameters & parameters,int &start_index, int &end_index)
 {
@@ -522,6 +591,7 @@ void Particle_Filter::particle_filter_parallelism(Parameters &parameters, LiDAR_
     pointxyz2pointxyzi(transform_last_use_particle.makeShared(),temp);
     get_label(temp,label_transformed);
     build_LiDAR_Interval(parameters,pointcloud);
+
     //parallelism
     std::vector<std::thread> thread_vec(8);
     std::mutex               mutex;
@@ -546,26 +616,42 @@ void Particle_Filter::particle_filter_parallelism(Parameters &parameters, LiDAR_
 void Particle_Filter::particle_filter_do(Parameters &parameters,IMU &imu, KdTree & kd, LiDAR_PointCloud &pointcloud , Measurement &measurement,int argc, char ** argv)
 {
     int count=0;
+    vector<pair<double,double>> temp;
     //6 Dimension transformation IntervalVector
-    IntervalVector box_6D=create_6D_box(imu,pointcloud);
+    //DEBUG move out
+    //box_6D=create_6D_box(imu,pointcloud);
     //use end_time to build KD-Tree
     tree_after_transform.setInputCloud(pointcloud.pointclouds[current_index_first].second.makeShared());
     build_LiDAR_Interval(parameters,pointcloud);
-    particle=generate_particle(box_6D,2,3,3,3,3 ,2);//233332 //345552    //234772
-    vector<double> distance;
+    //DEBUG move out
+    //particle=generate_particle(box_6D,2,3,3,3,3 ,2);//233332 //345552    //234772
 
+    vector<double> distance;
     int particle_size=particle.size();
     pcl::PointCloud<pcl::PointXYZI> temp_matched;
 
     pointxyz2pointxyzi(pointcloud.pointclouds[current_index_first].second.makeShared(),temp_matched);
     get_label(temp_matched,label_matched);
-
+    Eigen::Quaterniond ground_truth_q;
+    Eigen::Quaterniond particle_q;
+    ground_truth_q = Eigen::AngleAxisd(ground_truth[0][0], Eigen::Vector3d::UnitX())
+        * Eigen::AngleAxisd(ground_truth[0][1], Eigen::Vector3d::UnitY())
+        * Eigen::AngleAxisd(ground_truth[0][2], Eigen::Vector3d::UnitZ());
     for(int j=0;j<particle_size;j++)
     {
         particle_filter_parallelism(parameters,pointcloud,j);
         //DEBUG
         //show_all(argc,argv,pointcloud);
         //validate_result(parameters,measurement,imu);
+        particle_q = Eigen::AngleAxisd(particle[j].first[0], Eigen::Vector3d::UnitX())
+                         * Eigen::AngleAxisd(particle[j].first[1], Eigen::Vector3d::UnitY())
+                         * Eigen::AngleAxisd(particle[j].first[2], Eigen::Vector3d::UnitZ());
+        double dis_translation=sqrt(pow(particle[j].second[0]-ground_truth[1][0],2)+pow(particle[j].second[1]-ground_truth[1][1],2)+pow(particle[j].second[2]-ground_truth[1][2],2));
+        double dis_rotation=ground_truth_q.angularDistance(particle_q);
+        double dis=dis_rotation+dis_translation;
+        debug_sums.emplace_back(summe);
+        //DEBUG
+        //temp.emplace_back(make_pair(j,summe));
         sums.emplace_back(particle_weighted(j,summe));
         cout<<count++<<endl;
         update_max(summe,j);
@@ -579,6 +665,8 @@ void Particle_Filter::particle_filter_do(Parameters &parameters,IMU &imu, KdTree
         boden_transformed_marker_array.markers.clear();
         summe=0;
     }
+    //DEBUG
+
     gesamte_sums=calcualte_gesamte_sums();
     calcualte_normalized_sums(gesamte_sums);
     //sort
@@ -661,22 +749,164 @@ void Particle_Filter::calculate_average()
     }
     result.emplace_back(make_pair(erg1,erg2));
 }
+vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::generate_particle_translation(IntervalVector box_6d, Eigen::Vector3d rotation,int num3, int num4, int num5)
+{
+    vector<pair<Eigen::Vector3d,Eigen::Vector3d>> erg;
+    Eigen::Vector3d temp1;
+    Eigen::Vector3d temp2;
+    double d4=(box_6d[3].ub()-box_6d[3].lb())/num3;
+    double d5=(box_6d[4].ub()-box_6d[4].lb())/num4;
+    double d6=(box_6d[5].ub()-box_6d[5].lb())/num5;
+                temp1[0]=rotation[0];
+                temp1[1]=rotation[1];
+                temp1[2]=rotation[2];
+                for(int l=0;l<num3;l++)
+                {
 
+                            temp2[0]=box_6d[0].lb()+l*d4;
+                            //temp2[1]=box_6d[1].lb()+m*d5;
+                           // temp2[2]=box_6d[2].lb()+n*d6;
+                            temp2[1]=ground_truth[1][1];
+                            temp2[2]=ground_truth[1][2];
+                            erg.emplace_back(make_pair(temp1,temp2));
+                }
+                for(int m=0;m<num4;m++) {
+                        temp2[0]=ground_truth[1][0];
+                        temp2[1]=box_6d[1].lb()+m*d5;
+                        temp2[2]=ground_truth[1][2];
+                        erg.emplace_back(make_pair(temp1,temp2));
+                }
+
+                for(int n=0;n<num5;n++)
+                {
+                    temp2[0]=ground_truth[1][0];
+                    temp2[1]=ground_truth[1][1];
+                    temp2[2]=box_6d[2].lb()+n*d6;
+                    erg.emplace_back(make_pair(temp1,temp2));
+                }
+//    cout<<erg[0].first<<endl;
+//    cout<<erg[0].second<<endl;
+//    cout<<erg[251].first<<endl;
+//    cout<<erg[251].second<<endl;
+//    cout<<erg[252].first<<endl;
+//    cout<<erg[252].second<<endl;
+    return erg;
+}
+vector<Eigen::Vector3d> Particle_Filter::generate_particle_rotation(IntervalVector box_6d,int num0, int num1, int num2)
+{
+    vector<Eigen::Vector3d> erg;
+    Eigen::Vector3d temp1;
+
+    double d1=(box_6d[0].ub()-box_6d[0].lb())/num0;
+    double d2=(box_6d[1].ub()-box_6d[1].lb())/num1;
+    double d3=(box_6d[2].ub()-box_6d[2].lb())/num2;
+
+    for(int i=0;i<num0;i++)
+    {
+        for(int j=0;j<num1;j++)
+        {
+            for(int k=0;k<num2;k++)
+            {
+                            temp1[0]=box_6d[0].lb()+i*d1;
+                            temp1[1]=box_6d[1].lb()+j*d2;
+                            temp1[2]=box_6d[2].lb()+k*d3;
+                            erg.emplace_back(temp1);
+            }
+        }
+    }
+    return erg;
+}
+void Particle_Filter::create_pic(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,Measurement &measurement,int argc, char ** argv)
+{
+    int index=0;
+    vector<pair<Eigen::Vector3d,Eigen::Vector3d>> particle_temp;
+    get_start_end_cloud_index(pointcloud,parameters,start_index, end_index);
+    for(int i=1;i<10;i++)
+    {
+        //2 pointclouds - 10 pointclouds
+        current_index_first=start_index;
+        current_index_second=current_index_first+i;
+        start_time=pointcloud.pointclouds[current_index_first].first;
+        end_time=pointcloud.pointclouds[current_index_second].first;
+        box_6D=create_6D_box(imu,pointcloud);
+        ground_truth=get_ground_truth(parameters,measurement,imu);
+        //plot translation with truth rotation
+        vector<pair<Eigen::Vector3d,Eigen::Vector3d>> translation_particle=generate_particle_translation(box_6D,ground_truth[0],500,500 ,500);
+        particle.insert(particle.end(),translation_particle.begin(),translation_particle.end());
+        translation_particle.clear();
+        //generate rotation
+        vector<Eigen::Vector3d> rotation_particle=generate_particle_rotation(box_6D,5,5,5);
+        for(int j=0;j<rotation_particle.size();j++)
+        {
+            translation_particle=generate_particle_translation(box_6D,rotation_particle[i],500,500 ,500);
+            particle.insert(particle.end(),translation_particle.begin(),translation_particle.end());
+            translation_particle.clear();
+        }
+        particle_filter_do(parameters,imu,kd,pointcloud,measurement,argc,argv);
+        plot_debug();
+
+
+//        while(index<particle_temp.size()) {
+//            for (int i = index; i < particle_temp.size(); i++) {
+//                particle.emplace_back(particle_temp[i]);
+//                if ((i + 1) % 149 == 0)    //343
+//                {
+//                    index = i + 1;
+//                    break;
+//                }
+//            }
+//        }
+    }
+
+
+
+
+}
 vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_set_up(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,Measurement &measurement,int argc, char ** argv){
-
-
-    start_time=pointcloud.pointclouds[0].first;
-    end_time=pointcloud.pointclouds[2].first;
+    int rounds=0;
+    int index=0;
     pointclouds_Interval.resize(2);
+    create_pic(parameters,imu,kd,pointcloud,measurement,argc,argv);
     get_start_end_cloud_index(pointcloud,parameters,start_index, end_index);
     current_index_first=start_index;
     current_index_second=current_index_first+1;
     for(;current_index_first!=end_index;current_index_first++,current_index_second++)
     {
-        particle_filter_do(parameters,imu,kd,pointcloud,measurement,argc,argv);
-        particle.clear();
-        pointclouds_Interval[0].second.clear();
-        pointclouds_Interval[1].second.clear();
+        //DEBUG
+        start_time=pointcloud.pointclouds[current_index_first].first;
+        end_time=pointcloud.pointclouds[current_index_second].first;
+        box_6D=create_6D_box(imu,pointcloud);
+        ground_truth=get_ground_truth(parameters,measurement,imu);
+        //vector<pair<Eigen::Vector3d,Eigen::Vector3d>> particle_temp=generate_particle_translation(box_6D,1,1,1,149,1 ,1);//233332 //345552    //234772
+        //particle.emplace_back(make_pair(ground_truth[0],ground_truth[1]));
+        //particle_filter_do(parameters,imu,kd,pointcloud,measurement,argc,argv);
+        //particle.clear();
+        //pointclouds_Interval[0].second.clear();
+        //pointclouds_Interval[1].second.clear();
+        mode=0;
+//        while(index<particle_temp.size())
+//        {
+//            for(int i=index;i<particle_temp.size();i++)
+//            {
+//                particle.emplace_back(particle_temp[i]);
+//                if((i+1)%149==0)    //343
+//                {
+//                    index=i+1;
+//                    break;
+//                }
+//            }
+//
+//            particle_filter_do(parameters,imu,kd,pointcloud,measurement,argc,argv);
+//            particle.clear();
+//            pointclouds_Interval[0].second.clear();
+//            pointclouds_Interval[1].second.clear();
+//        }
+        plot_debug();
+
+//        particle_filter_do(parameters,imu,kd,pointcloud,measurement,argc,argv);
+//        particle.clear();
+//        pointclouds_Interval[0].second.clear();
+//        pointclouds_Interval[1].second.clear();
     }
 
 
@@ -1063,7 +1293,7 @@ double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<in
             if (x && y && z /*&& !if_matched[indices[i]]&&(intersect_volume>=volume/8)*/) {
                 if(label_transformed[k]==1 && label_matched[indices[i]]==1)
                 {
-                    s=s+0.5;
+                    s=s+0.3;
                     pcl::PointXYZRGB temp;
                     temp.x=transform_last_use_particle.points[k].x;
                     temp.y=transform_last_use_particle.points[k].y;
@@ -1305,15 +1535,15 @@ void Particle_Filter::pointcloud_show( int argc,char **argv)
     output5.header.frame_id="map";
     ros::Rate loop_rate(1);
 
-    int count=3000;
-    for(int i=0;i<count;i++)
-    {
-        temp1.markers.emplace_back(unmatched_marker_array.markers[i]);
-        temp2.markers.emplace_back(matched_marker_array.markers[i]);
-        temp3.markers.emplace_back(truth_marker_array.markers[i]);
-        temp4.markers.emplace_back(boden_truth_marker_array.markers[i]);
-        temp5.markers.emplace_back(boden_transformed_marker_array.markers[i]);
-    }
+//    int count=3000;
+//    for(int i=0;i<count;i++)
+//    {
+//        temp1.markers.emplace_back(unmatched_marker_array.markers[i]);
+//        temp2.markers.emplace_back(matched_marker_array.markers[i]);
+//        temp3.markers.emplace_back(truth_marker_array.markers[i]);
+//        temp4.markers.emplace_back(boden_truth_marker_array.markers[i]);
+//        temp5.markers.emplace_back(boden_transformed_marker_array.markers[i]);
+//    }
     while(ros::ok())
     {
         transformed_matched_pub.publish(output1);
@@ -1321,11 +1551,11 @@ void Particle_Filter::pointcloud_show( int argc,char **argv)
         truth_pub.publish(output3);
         boden_truth_pub.publish(output4);
         boden_transformed_pub.publish(output5);
-        unmateched_boxes_pub.publish(temp1);
+        unmateched_boxes_pub.publish(unmatched_marker_array);
         matched_boxes_pub.publish(matched_marker_array);
         truth_boxes_pub.publish(truth_marker_array);
-        boden_truth_boxes_pub.publish(temp4);
-        boden_transformed_boxes_pub.publish(temp5);
+        boden_truth_boxes_pub.publish(boden_truth_marker_array);
+        boden_transformed_boxes_pub.publish(boden_transformed_marker_array);
         ros::spinOnce();
         loop_rate.sleep();
     }

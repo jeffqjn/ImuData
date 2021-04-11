@@ -80,6 +80,7 @@ private:
     pcl::PointCloud<pcl::PointXYZRGB> boden_transformed;
     vector<int> point_index;
     vector<int> unmatch;
+    vector<double> debug_sums;
     int flag1;
     int flag2;
 
@@ -96,7 +97,9 @@ private:
     vector<particle_weighted> sums;
     vector<particle_weighted> resample_weight;
     vector<pair<Eigen::Vector3d, Eigen::Vector3d>> result;
-
+    IntervalVector box_6D;
+    int mode=-1;
+    vector<Eigen::Vector3d> ground_truth;
 public:
 
 
@@ -133,6 +136,12 @@ public:
     void calcualte_normalized_sums(double gesamt_sum);
     void resampling();
     void calculate_average();
+    //DEBUG Version
+    vector<pair<Eigen::Vector3d,Eigen::Vector3d>> generate_particle_translation(IntervalVector box_6d, Eigen::Vector3d rotation,  int num3, int num4, int num5);
+    vector<Eigen::Vector3d> generate_particle_rotation(IntervalVector box_6d,int num0, int num1, int num2);
+    Eigen::Vector3d rotationMatrixtoEulerAngle(Eigen::Matrix3d & matrix);
+    void plot_debug();
+    void create_pic(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,Measurement &measurement,int argc, char ** argv);
 };
 
 #endif //IMUDATA_PARTICLE_FILTER_H
