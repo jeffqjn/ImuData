@@ -249,36 +249,93 @@ vector<double> Particle_Filter::calculate_distance()
 }
 void Particle_Filter::plot_debug()
 {
-    matplotlibcpp::figure_size(1200, 780);
+
     vector<double> dd;
     vector<double> s;
+    bool first1=true;
     dd=calculate_distance();
-
-    vector<double> show_x;
+    vector<vector<double>> show_x;
+    //vector<double> show_x;
     vector<double> show_y;
     vector<double> show_z;
-    vector<double> show_d_x;
+    vector<vector<double>> show_d_x;
     vector<double> show_d_y;
     vector<double> show_d_z;
+
+    vector<double> show_x_truth;
+    vector<double> show_d_x_truth;
+
+    vector<double> show_ground_truth_x;
+    vector<double> show_ground_truth_d_x;
     int times=0;
-    while(times<=125) {
-        for (int i = 0; i < 500; i++) {
-            show_x.emplace_back(debug_sums[i+times*1500]);
-            show_d_x.emplace_back(dd[i+times*1500]);
+
+//    for (int i = 0; i < 10; i++) {
+//        show_x_truth.emplace_back(debug_sums[i]);
+//        show_d_x_truth.emplace_back(dd[i]);
+//        show_ground_truth_x.emplace_back(debug_sums.back());
+//        show_ground_truth_d_x.emplace_back(dd[i]);
+//    }
+
+    vector<double> temp_x;
+    vector<double> temp_d_x;
+    while(times<5) {
+        for (int i = 0; i < 10; i++) {
+            temp_x.emplace_back(debug_sums[i+times*30]);
+            temp_d_x.emplace_back(dd[i+times*30]);
         }
-        for (int i = 500; i < 1000; i++) {
-            show_y.emplace_back(debug_sums[i+times*1500]);
-            show_d_y.emplace_back(dd[i+times*1500]);
-        }
-        for (int i = 1000; i < 1500; i++) {
-            show_z.emplace_back(debug_sums[i+times*1500]);
-            show_d_z.emplace_back(dd[i+times*1500]);
-        }
-        matplotlibcpp::scatter(show_d_x,show_x);
-        matplotlibcpp::scatter(show_d_y,show_y);
-        matplotlibcpp::scatter(show_d_z,show_z);
+
+        show_x.emplace_back(temp_x);
+        show_d_x.emplace_back(temp_d_x);
+        temp_x.clear();
+        temp_d_x.clear();
+//        if(first1)
+//        {
+//            matplotlibcpp::scatter(show_d_x_truth,show_x_truth);
+//            first1=false;
+//        }
+
+
+        //show_x.clear();
+        //show_d_x.clear();
         times++;
+
+
     }
+
+    //vector<double> test1;
+    //vector<double> test2;
+    //test1.insert(test1.end(),show_x[0].begin(), show_x[0].end());
+    //test2.insert(test2.end(),show_x[4].begin(), show_x[4].end());
+    matplotlibcpp::figure();
+    matplotlibcpp::figure_size(1200, 780);
+    //matplotlibcpp::named_plot("truth roll rotation ",show_d_x_truth,show_x_truth);
+    //matplotlibcpp::named_plot("ground truth",show_ground_truth_d_x,show_ground_truth_x);
+    for(int i=0;i<show_x.size();i++)
+    {
+        string temp;
+       temp=to_string(i+1)+" "+"unit/s roll rotation error";
+       matplotlibcpp::named_plot(temp,show_d_x[i],show_x[i]);
+    //matplotlibcpp::scatter(show_d_x[0],show_x[0]);
+    }
+//    string temp;
+//    temp=to_string(times)+" "+"unit/s rotation error";
+//    matplotlibcpp::named_plot(temp,show_d_x,temp_x);
+    matplotlibcpp::legend();
+    //matplotlibcpp::save("/home/jeffqjn/Desktop/result/rotation_along_x1.png");
+    matplotlibcpp::show();
+    //matplotlibcpp::show();
+    //matplotlibcpp::title("Sample figure");
+
+    //matplotlibcpp::save("/home/jeffqjn/Desktop/result/rotation_along_x.png");
+    //        for (int i = 50; i < 100; i++) {
+//            show_y.emplace_back(debug_sums[i+times*150]);
+//            show_d_y.emplace_back(dd[i+times*150]);
+//        }
+//        for (int i = 100; i < 150; i++) {
+//            show_z.emplace_back(debug_sums[i+times*150]);
+//            show_d_z.emplace_back(dd[i+times*150]);
+//        }
+
     //TODO
 
 
@@ -299,9 +356,9 @@ void Particle_Filter::plot_debug()
 //            }
 //        }
 //    }
-    matplotlibcpp::title("Sample figure");
+   // matplotlibcpp::title("Sample figure");
     // Save the image (file format is determined by the extension)
-    matplotlibcpp::save("/home/jeffqjn/Desktop/result/1.png");
+    //matplotlibcpp::save("/home/jeffqjn/Desktop/result/1.png");
 }
 bool GreaterSort(Particle_Filter::particle_weighted a, Particle_Filter::particle_weighted b)
 {
@@ -678,9 +735,9 @@ void Particle_Filter::particle_filter_do(Parameters &parameters,IMU &imu, KdTree
         * Eigen::AngleAxisd(ground_truth[0][2], Eigen::Vector3d::UnitZ());
     for(int j=0;j<particle_size;j++)
     {
-        particle_filter_parallelism(parameters,pointcloud,j);
+        particle_filter_parallelism(parameters,pointcloud,90);
         //DEBUG
-        //show_all(argc,argv,pointcloud);
+        show_all(argc,argv,pointcloud);
         //validate_result(parameters,measurement,imu);
         particle_q = Eigen::AngleAxisd(particle[j].first[0], Eigen::Vector3d::UnitX())
                          * Eigen::AngleAxisd(particle[j].first[1], Eigen::Vector3d::UnitY())
@@ -793,67 +850,109 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::generate_particle
     vector<pair<Eigen::Vector3d,Eigen::Vector3d>> erg;
     Eigen::Vector3d temp1;
     Eigen::Vector3d temp2;
-    double d4=(box_6d[3].ub()-box_6d[3].lb())/num3;
-    double d5=(box_6d[4].ub()-box_6d[4].lb())/num4;
-    double d6=(box_6d[5].ub()-box_6d[5].lb())/num5;
-                temp1[0]=rotation[0];
-                temp1[1]=rotation[1];
-                temp1[2]=rotation[2];
-                for(int l=0;l<num3;l++)
-                {
-
-                            temp2[0]=box_6d[0].lb()+l*d4;
-                            //temp2[1]=box_6d[1].lb()+m*d5;
-                           // temp2[2]=box_6d[2].lb()+n*d6;
-                            temp2[1]=ground_truth[1][1];
-                            temp2[2]=ground_truth[1][2];
-                            erg.emplace_back(make_pair(temp1,temp2));
-                }
-                for(int m=0;m<num4;m++) {
-                        temp2[0]=ground_truth[1][0];
-                        temp2[1]=box_6d[1].lb()+m*d5;
-                        temp2[2]=ground_truth[1][2];
-                        erg.emplace_back(make_pair(temp1,temp2));
-                }
-
-                for(int n=0;n<num5;n++)
-                {
-                    temp2[0]=ground_truth[1][0];
-                    temp2[1]=ground_truth[1][1];
-                    temp2[2]=box_6d[2].lb()+n*d6;
-                    erg.emplace_back(make_pair(temp1,temp2));
-                }
-//    cout<<erg[0].first<<endl;
-//    cout<<erg[0].second<<endl;
-//    cout<<erg[251].first<<endl;
-//    cout<<erg[251].second<<endl;
-//    cout<<erg[252].first<<endl;
-//    cout<<erg[252].second<<endl;
+    temp1=rotation;
+    Eigen::Vector3d truth_translation= ground_truth[1];
+    double schritt_x=box_6d[3].diam()/num3;
+    double schritt_y=box_6d[4].diam()/num4;
+    double schritt_z=box_6d[5].diam()/num5;
+   //create particle for x direction
+   for(int i=0;i<num3;i++)
+   {
+       temp2[0]=truth_translation[0]+i*schritt_x;
+       temp2[1]=truth_translation[1];
+       temp2[2]=truth_translation[2];
+       erg.emplace_back(make_pair(temp1,temp2));
+   }
+   //create particle for y direction
+    for(int i=0;i<num4;i++)
+    {
+        temp2[0]=truth_translation[0];
+        temp2[1]=truth_translation[1]+i*schritt_y;
+        temp2[2]=truth_translation[2];
+        erg.emplace_back(make_pair(temp1,temp2));
+    }
+    //create particle for z direction
+    for(int i=0;i<num5;i++)
+    {
+        temp2[0]=truth_translation[0];
+        temp2[1]=truth_translation[1];
+        temp2[2]=truth_translation[2]+i*schritt_z;
+        erg.emplace_back(make_pair(temp1,temp2));
+    }
     return erg;
 }
 vector<Eigen::Vector3d> Particle_Filter::generate_particle_rotation(IntervalVector box_6d,int num0, int num1, int num2)
 {
     vector<Eigen::Vector3d> erg;
+    vector<Eigen::Vector3d> erg1;
+    vector<Eigen::Vector3d> erg2;
+    vector<Eigen::Vector3d> erg3;
     Eigen::Vector3d temp1;
 
     double d1=(box_6d[0].ub()-box_6d[0].lb())/num0;
     double d2=(box_6d[1].ub()-box_6d[1].lb())/num1;
     double d3=(box_6d[2].ub()-box_6d[2].lb())/num2;
 
-    for(int i=0;i<num0;i++)
+    for(int i=0;i<num0;i++) {
+        temp1[0]=ground_truth[0][0]+i*d1*40;
+        temp1[1]=ground_truth[0][1];
+        temp1[2]=ground_truth[0][2];
+        erg1.emplace_back(temp1);
+    }
+    //erg1=particle_sort(erg1);
+    for(int j=0;j<num1;j++) {
+        temp1[0]=ground_truth[0][0];
+        temp1[1]=ground_truth[0][1]+j*d2*40;
+        temp1[2]=ground_truth[0][2];
+        erg2.emplace_back(temp1);
+    }
+    //erg2=particle_sort(erg2);
+    for(int k=0;k<num2;k++) {
+        temp1[0]=ground_truth[0][0];
+        temp1[1]=ground_truth[0][1];
+        temp1[2]=ground_truth[0][2]+k*d3*40;
+        erg3.emplace_back(temp1);
+    }
+    //erg3=particle_sort(erg3);
+    erg.insert(erg.end(),erg1.begin(),erg1.end());
+    erg.insert(erg.end(),erg2.begin(),erg2.end());
+    erg.insert(erg.end(),erg3.begin(),erg3.end());
+//                            temp1[0]=box_6d[0].lb()+i*d1;
+//                            temp1[1]=box_6d[1].lb()+j*d2;
+//                            temp1[2]=box_6d[2].lb()+k*d3;
+//                            erg.emplace_back(temp1);
+
+    return erg;
+}
+bool sortparticle(Particle_Filter::particle_sorted a, Particle_Filter::particle_sorted b)
+{
+    return a.d<b.d;
+}
+vector<Eigen::Vector3d> Particle_Filter::particle_sort(vector<Eigen::Vector3d> temp)
+{
+    vector<Particle_Filter::particle_sorted> sorted;
+    vector<Eigen::Vector3d> erg;
+    for(auto item: temp)
     {
-        for(int j=0;j<num1;j++)
-        {
-            for(int k=0;k<num2;k++)
-            {
-                            temp1[0]=box_6d[0].lb()+i*d1;
-                            temp1[1]=box_6d[1].lb()+j*d2;
-                            temp1[2]=box_6d[2].lb()+k*d3;
-                            erg.emplace_back(temp1);
-            }
-        }
+        double dis=calculate_angular_distance(item);
+        sorted.emplace_back(particle_sorted(dis,item));
+    }
+    sort(sorted.begin(),sorted.end(),sortparticle);
+    for(auto item: sorted)
+    {
+        erg.emplace_back(item.v);
     }
     return erg;
+}
+double Particle_Filter::calculate_angular_distance(Eigen::Vector3d item)
+{
+    Eigen::Quaterniond p = Eigen::AngleAxisd(item[0], Eigen::Vector3d::UnitX())
+                     * Eigen::AngleAxisd(item[1], Eigen::Vector3d::UnitY())
+                     * Eigen::AngleAxisd(item[2], Eigen::Vector3d::UnitZ());
+    Eigen::Quaterniond ground_truth_q = Eigen::AngleAxisd(ground_truth[0][0], Eigen::Vector3d::UnitX())
+                                        * Eigen::AngleAxisd(ground_truth[0][1], Eigen::Vector3d::UnitY())
+                                        * Eigen::AngleAxisd(ground_truth[0][2], Eigen::Vector3d::UnitZ());
+    return p.angularDistance(ground_truth_q);
 }
 void Particle_Filter::create_pic(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,Measurement &measurement,int argc, char ** argv)
 {
@@ -870,16 +969,19 @@ void Particle_Filter::create_pic(Parameters &parameters,IMU &imu, KdTree & kd,  
         box_6D=create_6D_box(imu,pointcloud);
         ground_truth=get_ground_truth(parameters,measurement,imu);
         //plot translation with truth rotation
-        vector<pair<Eigen::Vector3d,Eigen::Vector3d>> translation_particle=generate_particle_translation(box_6D,ground_truth[0],500,500 ,500);
-        particle.insert(particle.end(),translation_particle.begin(),translation_particle.end());
-        translation_particle.clear();
+        //vector<pair<Eigen::Vector3d,Eigen::Vector3d>> translation_particle=generate_particle_translation(box_6D,ground_truth[0],10,10 ,10);
+        //particle.insert(particle.end(),translation_particle.begin(),translation_particle.end());
+        //translation_particle.clear();
+        vector<pair<Eigen::Vector3d,Eigen::Vector3d>> translation_particle;
         //generate rotation
         vector<Eigen::Vector3d> rotation_particle=generate_particle_rotation(box_6D,5,5,5);
+
         for(int j=0;j<rotation_particle.size();j++)
         {
-            translation_particle=generate_particle_translation(box_6D,rotation_particle[i],500,500 ,500);
+            translation_particle=generate_particle_translation(box_6D,rotation_particle[j],10,10 ,10);
             particle.insert(particle.end(),translation_particle.begin(),translation_particle.end());
             translation_particle.clear();
+
         }
         particle_filter_do(parameters,imu,kd,pointcloud,measurement,argc,argv);
         plot_debug();
@@ -1332,7 +1434,7 @@ double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<in
             if (x && y && z /*&& !if_matched[indices[i]]&&(intersect_volume>=volume/8)*/) {
                 if(label_transformed[k]==1 && label_matched[indices[i]]==1)
                 {
-                    s=s+0.3;
+                    s=s+0;
                     pcl::PointXYZRGB temp;
                     temp.x=transform_last_use_particle.points[k].x;
                     temp.y=transform_last_use_particle.points[k].y;
@@ -1350,7 +1452,7 @@ double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<in
                 }
                 else if(label_transformed[k]==0 && label_matched[indices[i]]==0)
                 {
-                    s=s+2;
+                    s=s+4;
                     pcl::PointXYZRGB temp;
                     temp.x=transform_last_use_particle.points[k].x;
                     temp.y=transform_last_use_particle.points[k].y;

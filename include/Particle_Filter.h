@@ -49,6 +49,16 @@ public:
         double weight_normal;
 
     };
+    struct particle_sorted
+    {
+        particle_sorted(double distance, Eigen::Vector3d value)
+        {
+            d=distance;
+            v=value;
+        }
+        double d;
+        Eigen::Vector3d v;
+    };
 private:
 
     pcl::PointCloud<pcl::PointXYZ> after_transform;
@@ -99,7 +109,7 @@ private:
     vector<pair<Eigen::Vector3d, Eigen::Vector3d>> result;
     IntervalVector box_6D;
     int mode=-1;
-    vector<Eigen::Vector3d> ground_truth;
+     vector<Eigen::Vector3d> ground_truth;
 public:
 
 
@@ -143,6 +153,8 @@ public:
     void plot_debug();
     void create_pic(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,Measurement &measurement,int argc, char ** argv);
     vector<double> calculate_distance();
+    vector<Eigen::Vector3d> particle_sort(vector<Eigen::Vector3d> temp);
+    double calculate_angular_distance(Eigen::Vector3d item);
 };
 
 #endif //IMUDATA_PARTICLE_FILTER_H
