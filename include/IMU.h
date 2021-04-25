@@ -24,7 +24,7 @@ public:
 
 public:
     void add_vel_measurement(sensor_msgs::ImuConstPtr imupointer,Parameters & parameters);
-    ibex::IntervalMatrix vel2rotatation(double start_compute_time, double  end_compute_time);
+    ibex::IntervalMatrix vel2rotatation(long double start_compute_time, long double  end_compute_time);
     Eigen::Vector3d acc2pose(double start_compute_time, double  end_compute_time, Eigen::Vector3d start_vel);
     Eigen::Vector3d set_calibration();
     IntervalVector set_calibration_interval();

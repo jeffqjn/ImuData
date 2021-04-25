@@ -1,11 +1,11 @@
 Gyro-scale-factor: 0.00046875
-Gyro-bias: 0.00245  #0.0017 #0.0009375 #0.001775 # #0.0012  #0.0022
+Gyro-bias: 0.030  #0.0017 #0.0009375 #0.001775 # #0.0012  #0.0022
 Gyro-walking-bias: 0
 Acc-scale-factor: 0.005
 Acc-bias: 0.01
 Acc-walking-bias: 0
-start_compute_time: 1557924740.05 #1557924770.958917 #1557924740.177742720  #1557924809.3 #1557924784.3  # 1557924854.9
-end_compute_time: 1557924741.2999 #1557924772.2999 #1557924740.375489712 42
+start_compute_time: 1557924807.198984 #1557924740.177742720 #1557924790.05
+end_compute_time: 1557924808.198984 #1557924740.7766137 #1557924792.2999
 #start_compute_time: 1557924740.177742720  #1557924809.3 #1557924784.3  # 1557924854.9
 #end_compute_time: 1557924740.2766137
 ICP_Iterations: 3
@@ -31,5 +31,6 @@ topics:
   - "/velodyne_points"
 
 particle_filter_threshold: 16685
+particle_filter_calculate_interval: 1
 # general
 Bag_Path: "/home/jeffqjn/Downloads/erg.bag"

@@ -24,11 +24,11 @@ void Parameters::set_ACC_WALKING_BIAS(double value)
 {
     this->ACC_WALKING_BIAS=value;
 }
-void Parameters::set_START_COMPUTE_TIME(double value)
+void Parameters::set_START_COMPUTE_TIME( double value)
 {
     this->START_COMPUTE_TIME=value;
 }
-void Parameters::set_END_COMPUTE_TIME(double value)
+void Parameters::set_END_COMPUTE_TIME( double value)
 {
     this->END_COMPUTE_TIME=value;
 }
@@ -37,6 +37,10 @@ void Parameters::set_Bag_Path(string path) {
 }
 void Parameters::set_Iterations(int times) {
     this->Iterations=times;
+}
+void Parameters::set_calcluate_interval(int interval)
+{
+    this->calculate_interval=interval;
 }
 double Parameters::get_GYRO_SCALE_FACTOR()
 {
@@ -50,11 +54,11 @@ double Parameters::get_Gyro_WALKING_BIAS()
 {
     return Parameters::Gyro_WALKING_BIAS;
 }
-double Parameters::get_START_COMPUTE_TIME()
+ double Parameters::get_START_COMPUTE_TIME()
 {
     return Parameters::START_COMPUTE_TIME;
 }
-double Parameters::get_END_COMPUTE_TIME()
+ double Parameters::get_END_COMPUTE_TIME()
 {
     return Parameters::END_COMPUTE_TIME;
 }
@@ -75,6 +79,10 @@ double Parameters::get_ACC_BIAS()
 double Parameters::get_ACC_WALKING_BIAS()
 {
     return Parameters::ACC_WALKING_BIAS;
+}
+int Parameters::get_calculate_interval()
+{
+    return Parameters::calculate_interval;
 }
 void Parameters::set_LiDAR_error_model_param(double rho, double phi, double theta,double horizontal_angle_uncertainty, double vertical_angle_uncertainty)
 {

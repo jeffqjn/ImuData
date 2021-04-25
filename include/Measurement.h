@@ -18,6 +18,9 @@ class Measurement
 {
 public:
     vector<pair<Interval,Eigen::Matrix4d>> tf2imu;
+    vector<pair<long double,Eigen::Matrix4d>> tf2imu_debug;
+    //DEBUG
+    vector<pair<long double,geometry_msgs::PoseStamped>>ground_truth_debug;
     vector<pair<Interval,geometry_msgs::PoseStamped>> ground_truth;
     vector<geometry_msgs::TransformStamped> tf_static;
 public:
@@ -27,8 +30,10 @@ public:
     Eigen::Matrix4d tf_mms_cam();
     Eigen::Matrix4d tf_cam_imu();
     Eigen::Matrix4d tf_cam_velodyne();
-    void transform_gt_imu(Eigen::Matrix4d tf_mms_cam, Eigen::Matrix4d tf_cam_imu, double start_time, double end_time);
-    Eigen::Matrix4d calculate_relative_transformation_imu(double start_time, double end_time);
+    //DEBUG
+    void transform_gt_imu(Eigen::Matrix4d tf_mms_cam, Eigen::Matrix4d tf_cam_imu,  double start_time,  double end_time);
+    //DEBUG
+    Eigen::Matrix4d calculate_relative_transformation_imu( double start_time,  double end_time);
 };
 
 #endif //IMUDATA_MEASUREMENT_H

@@ -18,8 +18,8 @@ private:
     double ACC_SCALE_FACTOR;
     double ACC_BIAS;
     double ACC_WALKING_BIAS;
-    double START_COMPUTE_TIME;
-    double END_COMPUTE_TIME;
+    long double START_COMPUTE_TIME;
+    long double END_COMPUTE_TIME;
     string BAG_PATH;
     int Iterations;
     double rho;
@@ -37,6 +37,7 @@ private:
     double bag_end_time;
     vector<string> topics;
     double PF_threshold;
+    int calculate_interval;
 public:
     void set_GYRO_SCALE_FACTOR(double value);
     void set_GYRO_BIAS(double value);
@@ -46,8 +47,8 @@ public:
     void set_ACC_BIAS(double value);
     void set_ACC_WALKING_BIAS(double value);
 
-    void set_START_COMPUTE_TIME(double value);
-    void set_END_COMPUTE_TIME(double value);
+    void set_START_COMPUTE_TIME( double value);
+    void set_END_COMPUTE_TIME( double value);
     void set_Bag_Path(string path);
     void set_Iterations(int times);
     void set_LiDAR_error_model_param(double rho, double phi, double theta,double horizontal_angle_uncertainty, double vertical_angle_uncertainty);
@@ -74,6 +75,8 @@ public:
     void load_topics(vector<string> topics);
     void get_topics(vector<string> &t);
     void set_PF_threshold(double threshold);
+    void set_calcluate_interval(int interval);
+    int get_calculate_interval();
     bool if_in_time_period(rosbag::MessageInstance const  m);
 };
 #endif //IMUDATA_PARAMETERS_H

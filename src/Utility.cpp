@@ -37,6 +37,8 @@ void load_from_config(Parameters & parameters)
     parameters.load_topics(config["topics"].as<vector<string>>());
     //PF Threshold
     parameters.set_PF_threshold(config["particle_filter_threshold"].as<double>());
+    //calculate interval
+    parameters.set_calcluate_interval(config["particle_filter_calculate_interval"].as<int>());
 }
 
 

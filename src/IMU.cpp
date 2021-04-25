@@ -2,74 +2,74 @@
 // Created by noah on 18.01.21.
 //
 #include <IMU.h>
-IntervalMatrix IMU::vel2rotatation(double start_compute_time, double  end_compute_time)
+IntervalMatrix IMU::vel2rotatation(long double start_compute_time, long double  end_compute_time)
 {
-    Interval current_stamp;
-    IntervalVector current_vel(3);
-    IntervalMatrix overall_rotation=Matrix::eye(3);
-    double delta_t;
-
-    int start_index=-1;
-    int end_index=-1;
-    //find the corresponding stamp of imu
-
-    //find LiDAR cloud time in imu data
-    for(int i=0 ;i <vel_data.size();i++)
-    {
-        if(vel_data[i].first.contains(start_compute_time))
-        {
-            start_index=i;
-        }
-        else if(vel_data[i].first.contains(end_compute_time))
-        {
-            end_index=i;
-        }
-        if(start_index!=-1 && end_index!=-1)
-        {
-            break;
-        }
-
-    }
-    for (int i=start_index;i<=end_index;i++)
-    {
-        delta_t=min(vel_data[i].first.ub(),end_compute_time)-max(start_compute_time,vel_data[i].first.lb());
-        IntervalMatrix Matrix_temp(3,3);
-        Matrix_temp=calculate_rodrigues_rotation(vel_data[i].second,delta_t);
-        //Matrix_temp &=IntervalMatrix(3,3,Interval(-1,1));
-        overall_rotation*=Matrix_temp;
-    }
-    overall_rotation &=IntervalMatrix(3,3,Interval(-1,1));
-    return overall_rotation;
-//    int stamp_index=0;
 //    Interval current_stamp;
 //    IntervalVector current_vel(3);
 //    IntervalMatrix overall_rotation=Matrix::eye(3);
 //    double delta_t;
-//    //find the corresponding stamp of imu
-//    while(!this->vel_data[stamp_index].first.contains(start_compute_time))
+//
+//    int start_index=-1;
+//    int end_index=-1;
+    //find the corresponding stamp of imu
+
+    //find LiDAR cloud time in imu data
+//    for(int i=0 ;i <vel_data.size();i++)
 //    {
-//        stamp_index++;
+//        if(vel_data[i].first.contains(start_compute_time))
+//        {
+//            start_index=i;
+//        }
+//        else if(vel_data[i].first.contains(end_compute_time))
+//        {
+//            end_index=i;
+//        }
+//        if(start_index!=-1 && end_index!=-1)
+//        {
+//            break;
+//        }
+//
 //    }
-//    if(this->vel_data[stamp_index].first.contains(start_compute_time))
+//    for (int i=start_index;i<=end_index;i++)
 //    {
-//        current_stamp=this->vel_data[stamp_index].first;
-//        current_vel=this->vel_data[stamp_index].second;
-//    }
-//    //calculate delta t, whether the required time is between two stamps
-//    do {
-//        delta_t=min(current_stamp.ub(),end_compute_time)-max(start_compute_time,current_stamp.lb());
+//        delta_t=min(vel_data[i].first.ub(),end_compute_time)-max(start_compute_time,vel_data[i].first.lb());
 //        IntervalMatrix Matrix_temp(3,3);
-//        Matrix_temp=calculate_rodrigues_rotation(current_vel,delta_t);
+//        Matrix_temp=calculate_rodrigues_rotation(vel_data[i].second,delta_t);
 //        Matrix_temp &=IntervalMatrix(3,3,Interval(-1,1));
 //        overall_rotation*=Matrix_temp;
-//        stamp_index++;
-//        if(stamp_index>vel_data.size()) break;
-//        current_stamp=this->vel_data[stamp_index].first;
-//        current_vel=this->vel_data[stamp_index].second;
-//    }while (current_stamp.lb()<end_compute_time);
-//    //cout<<overall_rotation<<endl;
+//    }
 //    overall_rotation &=IntervalMatrix(3,3,Interval(-1,1));
 //    return overall_rotation;
+    int stamp_index=0;
+    Interval current_stamp;
+    IntervalVector current_vel(3);
+    IntervalMatrix overall_rotation=Matrix::eye(3);
+    double delta_t;
+    //find the corresponding stamp of imu
+    while(!this->vel_data[stamp_index].first.contains(start_compute_time))
+    {
+        stamp_index++;
+    }
+    if(this->vel_data[stamp_index].first.contains(start_compute_time))
+    {
+        current_stamp=this->vel_data[stamp_index].first;
+        current_vel=this->vel_data[stamp_index].second;
+    }
+    //calculate delta t, whether the required time is between two stamps
+    do {
+        delta_t=min(current_stamp.ub(),(double)end_compute_time)-max((double)start_compute_time,current_stamp.lb());
+        IntervalMatrix Matrix_temp(3,3);
+        Matrix_temp=calculate_rodrigues_rotation(current_vel,delta_t);
+        Matrix_temp &=IntervalMatrix(3,3,Interval(-1,1));
+        overall_rotation*=Matrix_temp;
+        stamp_index++;
+        if(stamp_index>vel_data.size()) break;
+        current_stamp=this->vel_data[stamp_index].first;
+        current_vel=this->vel_data[stamp_index].second;
+    }while (current_stamp.lb()<end_compute_time);
+    //cout<<overall_rotation<<endl;
+    overall_rotation &=IntervalMatrix(3,3,Interval(-1,1));
+    return overall_rotation;
 }
 
 Eigen::Vector3d IMU::acc2pose(double start_compute_time, double  end_compute_time, Eigen::Vector3d start_vel)

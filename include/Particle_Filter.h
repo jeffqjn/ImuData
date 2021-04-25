@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <nav_msgs/Path.h>
 #include "matplotlibcpp.h"
 using namespace std;
 using namespace ibex;
@@ -59,13 +60,15 @@ public:
         double d;
         Eigen::Vector3d v;
     };
-private:
+public:
 
     pcl::PointCloud<pcl::PointXYZ> after_transform;
     Eigen::Matrix4d transformationsmatrix= Eigen::Matrix4d::Identity();
     map<int,int> summe_index;
     vector<pair<double,vector<IntervalVector>>> pointclouds_Interval;
     pcl::PointCloud<pcl::PointXYZ> transform_last_use_particle;
+     pcl::PointCloud<pcl::PointXYZ> transform_last_use_particle_calculated;
+    pcl::PointCloud<pcl::PointXYZ> point_cloud_last;
     pcl::PointCloud<pcl::PointXYZRGB> need_show_truth;
     pcl::PointCloud<pcl::PointXYZRGB> need_show_transformed;
     vector<IntervalVector> LiDARpoints;
@@ -91,6 +94,8 @@ private:
     vector<int> point_index;
     vector<int> unmatch;
     vector<double> debug_sums;
+
+    vector<geometry_msgs::PoseStamped> path_temp;
     int flag1;
     int flag2;
 
@@ -108,7 +113,7 @@ private:
     vector<particle_weighted> resample_weight;
     vector<pair<Eigen::Vector3d, Eigen::Vector3d>> result;
     IntervalVector box_6D;
-    int mode=-1;
+    bool iteration_first=true;
      vector<Eigen::Vector3d> ground_truth;
 public:
 
@@ -116,6 +121,8 @@ public:
     vector<pair<Eigen::Vector3d,Eigen::Vector3d>> particle_filter_set_up(Parameters &parameters,IMU &imu, KdTree & kd, LiDAR_PointCloud &pointcloud , Measurement &measurement,int argc, char ** argv);
     vector<pair<Eigen::Vector3d,Eigen::Vector3d>> generate_particle(IntervalVector box_6d, int num0,int num1, int num2, int num3, int num4, int num5);
     void transform_use_particle(pcl::PointCloud<pcl::PointXYZ> pointcloud, Eigen::Vector3d &angle, Eigen::Vector3d &translation);
+    void transform_use_particle_calculated(pcl::PointCloud<pcl::PointXYZ> &pointcloud, Eigen::Vector3d &angle, Eigen::Vector3d &translation);
+
     void transform_use_particle_Interval(vector<IntervalVector> pointcloud_interval, Eigen::Vector3d &angle, Eigen::Vector3d &translation,vector<IntervalVector> &after_transform_interval);
     Eigen::Matrix3d eulerAnglesToRotationMatrix(Eigen::Vector3d &theta);
     IntervalVector create_6D_box(IMU imu, LiDAR_PointCloud pointcloud);
@@ -155,6 +162,8 @@ public:
     vector<double> calculate_distance();
     vector<Eigen::Vector3d> particle_sort(vector<Eigen::Vector3d> temp);
     double calculate_angular_distance(Eigen::Vector3d item);
+    vector<double> calculate_rotation_distance();
+    void copy_pointcloud(pcl::PointCloud<pcl::PointXYZ> & from, pcl::PointCloud<pcl::PointXYZ> & to);
 };
 
 #endif //IMUDATA_PARTICLE_FILTER_H

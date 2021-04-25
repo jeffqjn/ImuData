@@ -79,7 +79,64 @@ bool if_velodyne_points(rosbag::MessageInstance const & m)
 {
     return m.getTopic()=="/velodyne_points";
 }
+void test1()
+{
+    nav_msgs::Path show;
+    geometry_msgs::PoseStamped temp1;
+    double roll, pitch , yaw;
+    Eigen::Quaterniond q;
+    Eigen::Vector3d p;
+    show.header.frame_id="map";
+    //calculate pose
 
+
+    //0
+    roll=-0.00090698620980309843;
+    pitch=-0.00027094413216461612;
+    yaw=9.0430034695092394e-05;
+    q = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())
+        * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY())
+        * Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+    temp1.pose.orientation.x=q.x();
+    temp1.pose.orientation.y=q.y();
+    temp1.pose.orientation.z=q.z();
+    temp1.pose.orientation.w=q.w();
+    temp1.pose.position.x=0.65489709281921493;
+    temp1.pose.position.y=-0.056224538803100285;
+    temp1.pose.position.z=0;
+    show.poses.emplace_back(temp1);
+    //1
+    roll=-0.0005878202562319576;
+    pitch=-0.00086515884550151286;
+    yaw=-0.00021559249732908711;
+    q = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())
+        * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY())
+        * Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+    temp1.pose.orientation.x=q.x();
+    temp1.pose.orientation.y=q.y();
+    temp1.pose.orientation.z=q.z();
+    temp1.pose.orientation.w=q.w();
+    temp1.pose.position.x=0.77770186318321355;
+    temp1.pose.position.y=-0.056229684829711454;
+    temp1.pose.position.z=0;
+    show.poses.emplace_back(temp1);
+    //2
+    roll=-0.0011719408199322204;
+    pitch=-0.0012084357652323745;
+    yaw=-0.0014550206641041246;
+    q = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())
+        * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY())
+        * Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+    temp1.pose.orientation.x=q.x();
+    temp1.pose.orientation.y=q.y();
+    temp1.pose.orientation.z=q.z();
+    temp1.pose.orientation.w=q.w();
+    temp1.pose.position.x=1.0103994979858399;
+    temp1.pose.position.y=-0.056229684829711454;
+    temp1.pose.position.z=0;
+    show.poses.emplace_back(temp1);
+
+}
 int main(int argc, char ** argv)
 {
     //Instanziieren
@@ -162,9 +219,9 @@ int main(int argc, char ** argv)
                 }
             }
     }
+    test1();
     rotation= imu.vel2rotatation(parameters.get_START_COMPUTE_TIME(), parameters.get_END_COMPUTE_TIME());
-    cout<<rotation<<endl;
-    PF.IntervalrotationMatrixtoEulerAngle(rotation);
+    //PF.IntervalrotationMatrixtoEulerAngle(rotation);
     //mms->camera
     Eigen::Matrix4d transform1=Eigen::Matrix4d::Identity();
     //camera->imu
@@ -175,13 +232,13 @@ int main(int argc, char ** argv)
 //    Eigen::Matrix4d left= (transform1*transform2);
 //    Eigen::Matrix4d right= (transform1*transform2).inverse();
     Eigen::Matrix4d relativ_transformation_imu=Eigen::Matrix4d::Identity();
-    //measurement.transform_gt_imu(transform1,transform2,parameters);
-    //relativ_transformation_imu=measurement.calculate_relative_transformation_imu(parameters);
+    measurement.transform_gt_imu(transform1,transform2,parameters.get_START_COMPUTE_TIME(), parameters.get_END_COMPUTE_TIME());
+    relativ_transformation_imu=measurement.calculate_relative_transformation_imu(parameters.get_START_COMPUTE_TIME(), parameters.get_END_COMPUTE_TIME());
     Eigen::Matrix4d after;
     //after=transform2.inverse()*(transform1.inverse()*relativ_transformation_imu*transform1)*transform2;
     Eigen::Matrix4d relativ_transformation_mms=Eigen::Matrix4d::Identity();
 
-    //cout<<relativ_transformation_imu<<endl;
+    cout<<relativ_transformation_imu<<endl;
 
     relativ_transformation_mms=transform1.inverse()*relativ_transformation_imu;
     relativ_transformation_mms=transform2.inverse()*relativ_transformation_mms;
