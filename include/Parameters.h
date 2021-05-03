@@ -38,6 +38,8 @@ private:
     vector<string> topics;
     double PF_threshold;
     int calculate_interval;
+    double non_ground_weight;
+    double ground_weight;
 public:
     void set_GYRO_SCALE_FACTOR(double value);
     void set_GYRO_BIAS(double value);
@@ -55,6 +57,8 @@ public:
     void set_NED_Velocity_uncertainty(double N, double E, double D);
     void set_LLH_uncertainty(double latitude, double longitude, double height);
     void set_bag_start_end_time(double s_time, double e_time);
+    void set_particle_non_ground_weight(double w);
+    void set_particle_ground_weight(double w);
     double get_GYRO_SCALE_FACTOR();
     double get_GYRO_BIAS();
     double get_Gyro_WALKING_BIAS();
@@ -77,6 +81,8 @@ public:
     void set_PF_threshold(double threshold);
     void set_calcluate_interval(int interval);
     int get_calculate_interval();
+    double get_particle_non_ground_weight();
+    double get_particle_ground_weight();
     bool if_in_time_period(rosbag::MessageInstance const  m);
 };
 #endif //IMUDATA_PARAMETERS_H

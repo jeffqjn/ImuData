@@ -244,8 +244,7 @@ vector<double> Particle_Filter::calculate_distance()
     {
         //auch negativ SHOW
         //double d= sqrt(pow(particle[i].second[0]-ground_truth[1][0],2)+pow(particle[i].second[1]-ground_truth[1][1],2)+pow(particle[i].second[2]-ground_truth[1][2],2));
-        double d= (particle[i].second[0]-ground_truth[1][0])+(particle[i].second[1]-ground_truth[1][1])+(particle[i].second[2]-ground_truth[1][2]);
-
+        double d= (particle[i].second[0]-ground_truth.back().second[0])+(particle[i].second[1]-ground_truth.back().second[1])+(particle[i].second[2]-ground_truth.back().second[2]);
         temp.emplace_back(d);
     }
     return temp;
@@ -284,12 +283,131 @@ void Particle_Filter::plot_debug()
     vector<double> show_legend_temp;
 
 
+//    while(times<10) {
+//        for (int i = 0; i < 20; i++) {
+//            temp_x.emplace_back(debug_sums[i+times*20]);
+//            temp_d_x.emplace_back(dd[i+times*20]);
+//            if(first1) {
+//                show_legend_temp.emplace_back(d_r[i + times * 20]);
+//                first1= false;
+//            }
+//        }
+//        show_x.emplace_back(temp_x);
+//        show_d_x.emplace_back(temp_d_x);
+//        show_legend_x.emplace_back(show_legend_temp);
+//        temp_x.clear();
+//        temp_d_x.clear();
+//        show_legend_temp.clear();
+//        times++;
+//        first1= true;
+//    }
+//        matplotlibcpp::figure();
+//    matplotlibcpp::figure_size(1200, 780);
+//    for(int i=0;i<show_x.size();i++)
+//    {
+//        string temp;
+//       temp="Rotation roll distance to ground_truth: "+ to_string(show_legend_x[i][0]);
+//       matplotlibcpp::named_plot(temp,show_d_x[i],show_x[i]);
+//    }
+//    matplotlibcpp::legend();
+//    matplotlibcpp::title("Effect of different rotations along x-axis and combined translation to the matching result");
+//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_x_t.png");
+//    temp_x.clear();
+//    temp_d_x.clear();
+//    temp_y.clear();
+//    temp_d_y.clear();
+//    temp_z.clear();
+//    temp_d_z.clear();
+//    show_legend_temp.clear();
+//    show_x.clear();
+//    show_d_x.clear();
+//    show_y.clear();
+//    show_d_y.clear();
+//    show_z.clear();
+//    show_d_z.clear();
+//    show_legend_x.clear();
+//    times=0;
+//    while(times<10) {
+//        for (int i = 200; i < 220; i++) {
+//            temp_x.emplace_back(debug_sums[i+times*20]);
+//            temp_d_x.emplace_back(dd[i+times*20]);
+//            if(first1) {
+//                show_legend_temp.emplace_back(d_r[i + times * 20]);
+//                first1= false;
+//            }
+//        }
+//        show_x.emplace_back(temp_x);
+//        show_d_x.emplace_back(temp_d_x);
+//        show_legend_x.emplace_back(show_legend_temp);
+//        temp_x.clear();
+//        temp_d_x.clear();
+//        show_legend_temp.clear();
+//        times++;
+//        first1= true;
+//    }
+//    matplotlibcpp::figure();
+//    matplotlibcpp::figure_size(1200, 780);
+//    for(int i=0;i<show_x.size();i++)
+//    {
+//        string temp;
+//        temp="Rotation pitch distance to ground_truth: "+ to_string(show_legend_x[i][0]);
+//        matplotlibcpp::named_plot(temp,show_d_x[i],show_x[i]);
+//    }
+//    matplotlibcpp::legend();
+//    matplotlibcpp::title("Effect of different rotations along y-axis and combined translation to the matching result");
+//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_y_t.png");
+//
+//    temp_x.clear();
+//    temp_d_x.clear();
+//    temp_y.clear();
+//    temp_d_y.clear();
+//    temp_z.clear();
+//    temp_d_z.clear();
+//    show_legend_temp.clear();
+//    show_x.clear();
+//    show_d_x.clear();
+//    show_y.clear();
+//    show_d_y.clear();
+//    show_z.clear();
+//    show_d_z.clear();
+//    show_legend_x.clear();
+//    times=0;
+//    while(times<10) {
+//        for (int i = 400; i < 420; i++) {
+//            temp_x.emplace_back(debug_sums[i+times*20]);
+//            temp_d_x.emplace_back(dd[i+times*20]);
+//            if(first1) {
+//                show_legend_temp.emplace_back(d_r[i + times * 20]);
+//                first1= false;
+//            }
+//        }
+//        show_x.emplace_back(temp_x);
+//        show_d_x.emplace_back(temp_d_x);
+//        show_legend_x.emplace_back(show_legend_temp);
+//        temp_x.clear();
+//        temp_d_x.clear();
+//        show_legend_temp.clear();
+//        times++;
+//        first1= true;
+//    }
+//    matplotlibcpp::figure();
+//    matplotlibcpp::figure_size(1200, 780);
+//    for(int i=0;i<show_x.size();i++)
+//    {
+//        string temp;
+//        temp="Rotation yaw distance to ground_truth: "+ to_string(show_legend_x[i][0]);
+//        matplotlibcpp::named_plot(temp,show_d_x[i],show_x[i]);
+//    }
+//    matplotlibcpp::legend();
+//    matplotlibcpp::title("Effect of different rotations along z-axis and combined translation to the matching result");
+//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_z_t.png");
+
     while(times<10) {
         for (int i = 0; i < 20; i++) {
-            temp_x.emplace_back(debug_sums[i+times*20]);
-            temp_d_x.emplace_back(dd[i+times*20]);
+            temp_x.emplace_back(debug_sums[i+times*60]);
+            temp_d_x.emplace_back(dd[i+times*60]);
             if(first1) {
-                show_legend_temp.emplace_back(d_r[i + times * 20]);
+                show_legend_temp.emplace_back(d_r[i + times * 60]);
                 first1= false;
             }
         }
@@ -299,10 +417,29 @@ void Particle_Filter::plot_debug()
         temp_x.clear();
         temp_d_x.clear();
         show_legend_temp.clear();
+        for (int i = 20; i < 40; i++) {
+            temp_y.emplace_back(debug_sums[i+times*60]);
+            temp_d_y.emplace_back(dd[i+times*60]);
+        }
+        show_y.emplace_back(temp_y);
+        show_d_y.emplace_back(temp_d_y);
+        temp_y.clear();
+        temp_d_y.clear();
+        show_legend_temp.clear();
+        for (int i = 40; i < 60; i++) {
+            temp_z.emplace_back(debug_sums[i+times*60]);
+            temp_d_z.emplace_back(dd[i+times*60]);
+        }
+        show_z.emplace_back(temp_z);
+        show_d_z.emplace_back(temp_d_z);
+        temp_z.clear();
+        temp_d_z.clear();
+        show_legend_temp.clear();
         times++;
         first1= true;
     }
-        matplotlibcpp::figure();
+
+    matplotlibcpp::figure();
     matplotlibcpp::figure_size(1200, 780);
     for(int i=0;i<show_x.size();i++)
     {
@@ -311,8 +448,32 @@ void Particle_Filter::plot_debug()
        matplotlibcpp::named_plot(temp,show_d_x[i],show_x[i]);
     }
     matplotlibcpp::legend();
-    matplotlibcpp::title("Effect of different rotations along x-axis and combined translation to the matching result");
-    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_x_t.png");
+    matplotlibcpp::title("Effect of different rotations along x-axis and translation along x-axis to the matching result");
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_x_t_x.png");
+    matplotlibcpp::figure();
+    matplotlibcpp::figure_size(1200, 780);
+    for(int i=0;i<show_y.size();i++)
+    {
+        string temp;
+        temp="Rotation roll distance to ground_truth: "+ to_string(show_legend_x[i][0]);
+        matplotlibcpp::named_plot(temp,show_d_y[i],show_y[i]);
+    }
+    matplotlibcpp::legend();
+    matplotlibcpp::title("Effect of different rotations along x-axis and translation along y-axis to the matching result");
+
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_x_t_y.png");
+    matplotlibcpp::figure();
+    matplotlibcpp::figure_size(1200, 780);
+    for(int i=0;i<show_z.size();i++)
+    {
+        string temp;
+        temp="Rotation roll distance to ground_truth: "+ to_string(show_legend_x[i][0]);
+        matplotlibcpp::named_plot(temp,show_d_z[i],show_z[i]);
+    }
+    matplotlibcpp::legend();
+    matplotlibcpp::title("Effect of different rotations along x-axis and translation along z-axis to the matching result");
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_x_t_z.png");
+
     temp_x.clear();
     temp_d_x.clear();
     temp_y.clear();
@@ -328,12 +489,13 @@ void Particle_Filter::plot_debug()
     show_d_z.clear();
     show_legend_x.clear();
     times=0;
+
     while(times<10) {
-        for (int i = 200; i < 220; i++) {
-            temp_x.emplace_back(debug_sums[i+times*20]);
-            temp_d_x.emplace_back(dd[i+times*20]);
+        for (int i = 600; i < 620; i++) {
+            temp_x.emplace_back(debug_sums[i+times*60]);
+            temp_d_x.emplace_back(dd[i+times*60]);
             if(first1) {
-                show_legend_temp.emplace_back(d_r[i + times * 20]);
+                show_legend_temp.emplace_back(d_r[i + times * 60]);
                 first1= false;
             }
         }
@@ -343,9 +505,28 @@ void Particle_Filter::plot_debug()
         temp_x.clear();
         temp_d_x.clear();
         show_legend_temp.clear();
+        for (int i = 620; i < 640; i++) {
+            temp_y.emplace_back(debug_sums[i+times*60]);
+            temp_d_y.emplace_back(dd[i+times*60]);
+        }
+        show_y.emplace_back(temp_y);
+        show_d_y.emplace_back(temp_d_y);
+        temp_y.clear();
+        temp_d_y.clear();
+        show_legend_temp.clear();
+        for (int i = 640; i < 660; i++) {
+            temp_z.emplace_back(debug_sums[i+times*60]);
+            temp_d_z.emplace_back(dd[i+times*60]);
+        }
+        show_z.emplace_back(temp_z);
+        show_d_z.emplace_back(temp_d_z);
+        temp_z.clear();
+        temp_d_z.clear();
+        show_legend_temp.clear();
         times++;
         first1= true;
     }
+
     matplotlibcpp::figure();
     matplotlibcpp::figure_size(1200, 780);
     for(int i=0;i<show_x.size();i++)
@@ -355,8 +536,31 @@ void Particle_Filter::plot_debug()
         matplotlibcpp::named_plot(temp,show_d_x[i],show_x[i]);
     }
     matplotlibcpp::legend();
-    matplotlibcpp::title("Effect of different rotations along y-axis and combined translation to the matching result");
-    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_y_t.png");
+    matplotlibcpp::title("Effect of different rotations along y-axis and translation along x-axis to the matching result");
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_y_t_x.png");
+    matplotlibcpp::figure();
+    matplotlibcpp::figure_size(1200, 780);
+    for(int i=0;i<show_y.size();i++)
+    {
+        string temp;
+        temp="Rotation pitch distance to ground_truth: "+ to_string(show_legend_x[i][0]);
+        matplotlibcpp::named_plot(temp,show_d_y[i],show_y[i]);
+    }
+    matplotlibcpp::legend();
+    matplotlibcpp::title("Effect of different rotations along y-axis and translation along y-axis to the matching result");
+
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_y_t_y.png");
+    matplotlibcpp::figure();
+    matplotlibcpp::figure_size(1200, 780);
+    for(int i=0;i<show_z.size();i++)
+    {
+        string temp;
+        temp="Rotation pitch distance to ground_truth: "+ to_string(show_legend_x[i][0]);
+        matplotlibcpp::named_plot(temp,show_d_z[i],show_z[i]);
+    }
+    matplotlibcpp::legend();
+    matplotlibcpp::title("Effect of different rotations along y-axis and translation along z-axis to the matching result");
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_y_t_z.png");
 
     temp_x.clear();
     temp_d_x.clear();
@@ -374,11 +578,11 @@ void Particle_Filter::plot_debug()
     show_legend_x.clear();
     times=0;
     while(times<10) {
-        for (int i = 400; i < 420; i++) {
-            temp_x.emplace_back(debug_sums[i+times*20]);
-            temp_d_x.emplace_back(dd[i+times*20]);
+        for (int i = 1200; i < 1220; i++) {
+            temp_x.emplace_back(debug_sums[i+times*60]);
+            temp_d_x.emplace_back(dd[i+times*60]);
             if(first1) {
-                show_legend_temp.emplace_back(d_r[i + times * 20]);
+                show_legend_temp.emplace_back(d_r[i + times * 60]);
                 first1= false;
             }
         }
@@ -388,9 +592,28 @@ void Particle_Filter::plot_debug()
         temp_x.clear();
         temp_d_x.clear();
         show_legend_temp.clear();
+        for (int i = 1220; i < 1240; i++) {
+            temp_y.emplace_back(debug_sums[i+times*60]);
+            temp_d_y.emplace_back(dd[i+times*60]);
+        }
+        show_y.emplace_back(temp_y);
+        show_d_y.emplace_back(temp_d_y);
+        temp_y.clear();
+        temp_d_y.clear();
+        show_legend_temp.clear();
+        for (int i = 1240; i < 1260; i++) {
+            temp_z.emplace_back(debug_sums[i+times*60]);
+            temp_d_z.emplace_back(dd[i+times*60]);
+        }
+        show_z.emplace_back(temp_z);
+        show_d_z.emplace_back(temp_d_z);
+        temp_z.clear();
+        temp_d_z.clear();
+        show_legend_temp.clear();
         times++;
         first1= true;
     }
+
     matplotlibcpp::figure();
     matplotlibcpp::figure_size(1200, 780);
     for(int i=0;i<show_x.size();i++)
@@ -400,255 +623,31 @@ void Particle_Filter::plot_debug()
         matplotlibcpp::named_plot(temp,show_d_x[i],show_x[i]);
     }
     matplotlibcpp::legend();
-    matplotlibcpp::title("Effect of different rotations along z-axis and combined translation to the matching result");
-    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_z_t.png");
+    matplotlibcpp::title("Effect of different rotations along z-axis and translation along x-axis to the matching result");
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_z_t_x.png");
+    matplotlibcpp::figure();
+    matplotlibcpp::figure_size(1200, 780);
+    for(int i=0;i<show_y.size();i++)
+    {
+        string temp;
+        temp="Rotation yaw distance to ground_truth: "+ to_string(show_legend_x[i][0]);
+        matplotlibcpp::named_plot(temp,show_d_y[i],show_y[i]);
+    }
+    matplotlibcpp::legend();
+    matplotlibcpp::title("Effect of different rotations along z-axis and translation along y-axis to the matching result");
 
-//    while(times<10) {
-//        for (int i = 0; i < 20; i++) {
-//            temp_x.emplace_back(debug_sums[i+times*60]);
-//            temp_d_x.emplace_back(dd[i+times*60]);
-//            if(first1) {
-//                show_legend_temp.emplace_back(d_r[i + times * 60]);
-//                first1= false;
-//            }
-//        }
-//        show_x.emplace_back(temp_x);
-//        show_d_x.emplace_back(temp_d_x);
-//        show_legend_x.emplace_back(show_legend_temp);
-//        temp_x.clear();
-//        temp_d_x.clear();
-//        show_legend_temp.clear();
-//        for (int i = 20; i < 40; i++) {
-//            temp_y.emplace_back(debug_sums[i+times*60]);
-//            temp_d_y.emplace_back(dd[i+times*60]);
-//        }
-//        show_y.emplace_back(temp_y);
-//        show_d_y.emplace_back(temp_d_y);
-//        temp_y.clear();
-//        temp_d_y.clear();
-//        show_legend_temp.clear();
-//        for (int i = 40; i < 60; i++) {
-//            temp_z.emplace_back(debug_sums[i+times*60]);
-//            temp_d_z.emplace_back(dd[i+times*60]);
-//        }
-//        show_z.emplace_back(temp_z);
-//        show_d_z.emplace_back(temp_d_z);
-//        temp_z.clear();
-//        temp_d_z.clear();
-//        show_legend_temp.clear();
-//        times++;
-//        first1= true;
-//    }
-//
-//    matplotlibcpp::figure();
-//    matplotlibcpp::figure_size(1200, 780);
-//    for(int i=0;i<show_x.size();i++)
-//    {
-//        string temp;
-//       temp="Rotation roll distance to ground_truth: "+ to_string(show_legend_x[i][0]);
-//       matplotlibcpp::named_plot(temp,show_d_x[i],show_x[i]);
-//    }
-//    matplotlibcpp::legend();
-//    matplotlibcpp::title("Effect of different rotations along x-axis and translation along x-axis to the matching result");
-//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_x_t_x.png");
-//    matplotlibcpp::figure();
-//    matplotlibcpp::figure_size(1200, 780);
-//    for(int i=0;i<show_y.size();i++)
-//    {
-//        string temp;
-//        temp="Rotation roll distance to ground_truth: "+ to_string(show_legend_x[i][0]);
-//        matplotlibcpp::named_plot(temp,show_d_y[i],show_y[i]);
-//    }
-//    matplotlibcpp::legend();
-//    matplotlibcpp::title("Effect of different rotations along x-axis and translation along y-axis to the matching result");
-//
-//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_x_t_y.png");
-//    matplotlibcpp::figure();
-//    matplotlibcpp::figure_size(1200, 780);
-//    for(int i=0;i<show_z.size();i++)
-//    {
-//        string temp;
-//        temp="Rotation roll distance to ground_truth: "+ to_string(show_legend_x[i][0]);
-//        matplotlibcpp::named_plot(temp,show_d_z[i],show_z[i]);
-//    }
-//    matplotlibcpp::legend();
-//    matplotlibcpp::title("Effect of different rotations along x-axis and translation along z-axis to the matching result");
-//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_x_t_z.png");
-//
-//    temp_x.clear();
-//    temp_d_x.clear();
-//    temp_y.clear();
-//    temp_d_y.clear();
-//    temp_z.clear();
-//    temp_d_z.clear();
-//    show_legend_temp.clear();
-//    show_x.clear();
-//    show_d_x.clear();
-//    show_y.clear();
-//    show_d_y.clear();
-//    show_z.clear();
-//    show_d_z.clear();
-//    show_legend_x.clear();
-//    times=0;
-//
-//    while(times<10) {
-//        for (int i = 600; i < 620; i++) {
-//            temp_x.emplace_back(debug_sums[i+times*60]);
-//            temp_d_x.emplace_back(dd[i+times*60]);
-//            if(first1) {
-//                show_legend_temp.emplace_back(d_r[i + times * 60]);
-//                first1= false;
-//            }
-//        }
-//        show_x.emplace_back(temp_x);
-//        show_d_x.emplace_back(temp_d_x);
-//        show_legend_x.emplace_back(show_legend_temp);
-//        temp_x.clear();
-//        temp_d_x.clear();
-//        show_legend_temp.clear();
-//        for (int i = 620; i < 640; i++) {
-//            temp_y.emplace_back(debug_sums[i+times*60]);
-//            temp_d_y.emplace_back(dd[i+times*60]);
-//        }
-//        show_y.emplace_back(temp_y);
-//        show_d_y.emplace_back(temp_d_y);
-//        temp_y.clear();
-//        temp_d_y.clear();
-//        show_legend_temp.clear();
-//        for (int i = 640; i < 660; i++) {
-//            temp_z.emplace_back(debug_sums[i+times*60]);
-//            temp_d_z.emplace_back(dd[i+times*60]);
-//        }
-//        show_z.emplace_back(temp_z);
-//        show_d_z.emplace_back(temp_d_z);
-//        temp_z.clear();
-//        temp_d_z.clear();
-//        show_legend_temp.clear();
-//        times++;
-//        first1= true;
-//    }
-//
-//    matplotlibcpp::figure();
-//    matplotlibcpp::figure_size(1200, 780);
-//    for(int i=0;i<show_x.size();i++)
-//    {
-//        string temp;
-//        temp="Rotation pitch distance to ground_truth: "+ to_string(show_legend_x[i][0]);
-//        matplotlibcpp::named_plot(temp,show_d_x[i],show_x[i]);
-//    }
-//    matplotlibcpp::legend();
-//    matplotlibcpp::title("Effect of different rotations along y-axis and translation along x-axis to the matching result");
-//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_y_t_x.png");
-//    matplotlibcpp::figure();
-//    matplotlibcpp::figure_size(1200, 780);
-//    for(int i=0;i<show_y.size();i++)
-//    {
-//        string temp;
-//        temp="Rotation pitch distance to ground_truth: "+ to_string(show_legend_x[i][0]);
-//        matplotlibcpp::named_plot(temp,show_d_y[i],show_y[i]);
-//    }
-//    matplotlibcpp::legend();
-//    matplotlibcpp::title("Effect of different rotations along y-axis and translation along y-axis to the matching result");
-//
-//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_y_t_y.png");
-//    matplotlibcpp::figure();
-//    matplotlibcpp::figure_size(1200, 780);
-//    for(int i=0;i<show_z.size();i++)
-//    {
-//        string temp;
-//        temp="Rotation pitch distance to ground_truth: "+ to_string(show_legend_x[i][0]);
-//        matplotlibcpp::named_plot(temp,show_d_z[i],show_z[i]);
-//    }
-//    matplotlibcpp::legend();
-//    matplotlibcpp::title("Effect of different rotations along y-axis and translation along z-axis to the matching result");
-//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_y_t_z.png");
-//
-//    temp_x.clear();
-//    temp_d_x.clear();
-//    temp_y.clear();
-//    temp_d_y.clear();
-//    temp_z.clear();
-//    temp_d_z.clear();
-//    show_legend_temp.clear();
-//    show_x.clear();
-//    show_d_x.clear();
-//    show_y.clear();
-//    show_d_y.clear();
-//    show_z.clear();
-//    show_d_z.clear();
-//    show_legend_x.clear();
-//    times=0;
-//    while(times<10) {
-//        for (int i = 1200; i < 1220; i++) {
-//            temp_x.emplace_back(debug_sums[i+times*60]);
-//            temp_d_x.emplace_back(dd[i+times*60]);
-//            if(first1) {
-//                show_legend_temp.emplace_back(d_r[i + times * 60]);
-//                first1= false;
-//            }
-//        }
-//        show_x.emplace_back(temp_x);
-//        show_d_x.emplace_back(temp_d_x);
-//        show_legend_x.emplace_back(show_legend_temp);
-//        temp_x.clear();
-//        temp_d_x.clear();
-//        show_legend_temp.clear();
-//        for (int i = 1220; i < 1240; i++) {
-//            temp_y.emplace_back(debug_sums[i+times*60]);
-//            temp_d_y.emplace_back(dd[i+times*60]);
-//        }
-//        show_y.emplace_back(temp_y);
-//        show_d_y.emplace_back(temp_d_y);
-//        temp_y.clear();
-//        temp_d_y.clear();
-//        show_legend_temp.clear();
-//        for (int i = 1240; i < 1260; i++) {
-//            temp_z.emplace_back(debug_sums[i+times*60]);
-//            temp_d_z.emplace_back(dd[i+times*60]);
-//        }
-//        show_z.emplace_back(temp_z);
-//        show_d_z.emplace_back(temp_d_z);
-//        temp_z.clear();
-//        temp_d_z.clear();
-//        show_legend_temp.clear();
-//        times++;
-//        first1= true;
-//    }
-//
-//    matplotlibcpp::figure();
-//    matplotlibcpp::figure_size(1200, 780);
-//    for(int i=0;i<show_x.size();i++)
-//    {
-//        string temp;
-//        temp="Rotation yaw distance to ground_truth: "+ to_string(show_legend_x[i][0]);
-//        matplotlibcpp::named_plot(temp,show_d_x[i],show_x[i]);
-//    }
-//    matplotlibcpp::legend();
-//    matplotlibcpp::title("Effect of different rotations along z-axis and translation along x-axis to the matching result");
-//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_z_t_x.png");
-//    matplotlibcpp::figure();
-//    matplotlibcpp::figure_size(1200, 780);
-//    for(int i=0;i<show_y.size();i++)
-//    {
-//        string temp;
-//        temp="Rotation yaw distance to ground_truth: "+ to_string(show_legend_x[i][0]);
-//        matplotlibcpp::named_plot(temp,show_d_y[i],show_y[i]);
-//    }
-//    matplotlibcpp::legend();
-//    matplotlibcpp::title("Effect of different rotations along z-axis and translation along y-axis to the matching result");
-//
-//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_z_t_y.png");
-//    matplotlibcpp::figure();
-//    matplotlibcpp::figure_size(1200, 780);
-//    for(int i=0;i<show_z.size();i++)
-//    {
-//        string temp;
-//        temp="Rotation yaw distance to ground_truth: "+ to_string(show_legend_x[i][0]);
-//        matplotlibcpp::named_plot(temp,show_d_z[i],show_z[i]);
-//    }
-//    matplotlibcpp::legend();
-//    matplotlibcpp::title("Effect of different rotations along z-axis and translation along z-axis to the matching result");
-//    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_z_t_z.png");
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_z_t_y.png");
+    matplotlibcpp::figure();
+    matplotlibcpp::figure_size(1200, 780);
+    for(int i=0;i<show_z.size();i++)
+    {
+        string temp;
+        temp="Rotation yaw distance to ground_truth: "+ to_string(show_legend_x[i][0]);
+        matplotlibcpp::named_plot(temp,show_d_z[i],show_z[i]);
+    }
+    matplotlibcpp::legend();
+    matplotlibcpp::title("Effect of different rotations along z-axis and translation along z-axis to the matching result");
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/r_z_t_z.png");
 
 }
 bool GreaterSort(Particle_Filter::particle_weighted a, Particle_Filter::particle_weighted b)
@@ -802,7 +801,7 @@ bool intersection_debug(vector<IntervalVector> &erg, IntervalVector & origin)
     }
     return temp;
 }
-vector<Eigen::Vector3d> Particle_Filter::get_ground_truth(Parameters &parameters, Measurement &measurement, IMU &imu)
+void Particle_Filter::get_ground_truth(Parameters &parameters, Measurement &measurement, IMU &imu)
 {
     vector<Eigen::Vector3d> erg;
     IntervalMatrix rotation(3,3);
@@ -820,28 +819,49 @@ vector<Eigen::Vector3d> Particle_Filter::get_ground_truth(Parameters &parameters
     Eigen::Matrix4d relativ_transformation_imu3=Eigen::Matrix4d::Identity();
     measurement.transform_gt_imu(transform1,transform2,start_time,end_time);
     relativ_transformation_imu=measurement.calculate_relative_transformation_imu(start_time,end_time);
-
     relativ_transformation_imu2= (transform1*transform2).inverse()*relativ_transformation_imu*(transform1*transform2);
     relativ_transformation_imu3= (transform1*transform3).inverse()*relativ_transformation_imu*(transform1*transform3);
-    cout<<relativ_transformation_imu<<endl;
-    cout<<relativ_transformation_imu2<<endl;
+    IntervalMatrix erg1(3,3);
+    IntervalMatrix left(3,3);
+    IntervalMatrix right(3,3);
+    Eigen::Matrix3d left_temp;
+    Eigen::Matrix3d right_temp;
+    Eigen::Matrix4d temp1;
+    Eigen::Matrix4d temp2;
+    temp1=transform2.inverse()*transform3;
+    temp2=temp1.inverse();
+    for(int i=0;i<3;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            left[i][j]=temp1(i,j);
+        }
+    }
+    for(int i=0;i<3;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            right[i][j]=temp2(i,j);
+        }
+    }
+    erg1=left*rotation*right;
     vector<vector<bool>> test;
     vector<bool> temp;
-    temp.emplace_back(rotation[0][0].contains(relativ_transformation_imu3(0,0)));
-    temp.emplace_back(rotation[0][1].contains(relativ_transformation_imu3(0,1)));
-    temp.emplace_back(rotation[0][2].contains(relativ_transformation_imu3(0,2)));
+    temp.emplace_back(erg1[0][0].contains(relativ_transformation_imu2(0,0)));
+    temp.emplace_back(erg1[0][1].contains(relativ_transformation_imu2(0,1)));
+    temp.emplace_back(erg1[0][2].contains(relativ_transformation_imu2(0,2)));
     test.emplace_back(temp);
     temp.clear();
 
-    temp.emplace_back(rotation[1][0].contains(relativ_transformation_imu3(1,0)));
-    temp.emplace_back(rotation[1][1].contains(relativ_transformation_imu3(1,1)));
-    temp.emplace_back(rotation[1][2].contains(relativ_transformation_imu3(1,2)));
+    temp.emplace_back(erg1[1][0].contains(relativ_transformation_imu2(1,0)));
+    temp.emplace_back(erg1[1][1].contains(relativ_transformation_imu2(1,1)));
+    temp.emplace_back(erg1[1][2].contains(relativ_transformation_imu2(1,2)));
     test.emplace_back(temp);
     temp.clear();
 
-    temp.emplace_back(rotation[2][0].contains(relativ_transformation_imu3(2,0)));
-    temp.emplace_back(rotation[2][1].contains(relativ_transformation_imu3(2,1)));
-    temp.emplace_back(rotation[2][2].contains(relativ_transformation_imu3(2,2)));
+    temp.emplace_back(erg1[2][0].contains(relativ_transformation_imu2(2,0)));
+    temp.emplace_back(erg1[2][1].contains(relativ_transformation_imu2(2,1)));
+    temp.emplace_back(erg1[2][2].contains(relativ_transformation_imu2(2,2)));
     test.emplace_back(temp);
     temp.clear();
 
@@ -853,63 +873,54 @@ vector<Eigen::Vector3d> Particle_Filter::get_ground_truth(Parameters &parameters
         }
         cout<<endl;
     }
+
+
+
+
+//    vector<vector<bool>> test;
+//    vector<bool> temp;
+//    temp.emplace_back(rotation[0][0].contains(relativ_transformation_imu2(0,0)));
+//    temp.emplace_back(rotation[0][1].contains(relativ_transformation_imu2(0,1)));
+//    temp.emplace_back(rotation[0][2].contains(relativ_transformation_imu2(0,2)));
+//    test.emplace_back(temp);
+//    temp.clear();
+//
+//    temp.emplace_back(rotation[1][0].contains(relativ_transformation_imu2(1,0)));
+//    temp.emplace_back(rotation[1][1].contains(relativ_transformation_imu2(1,1)));
+//    temp.emplace_back(rotation[1][2].contains(relativ_transformation_imu2(1,2)));
+//    test.emplace_back(temp);
+//    temp.clear();
+//
+//    temp.emplace_back(rotation[2][0].contains(relativ_transformation_imu2(2,0)));
+//    temp.emplace_back(rotation[2][1].contains(relativ_transformation_imu2(2,1)));
+//    temp.emplace_back(rotation[2][2].contains(relativ_transformation_imu2(2,2)));
+//    test.emplace_back(temp);
+//    temp.clear();
+//
+//    for( int i=0;i<3;i++)
+//    {
+//        for(int j=0;j<3;j++)
+//        {
+//            cout<<test[i][j]<<" ";
+//        }
+//        cout<<endl;
+//    }
     cout<<" "<<endl;
+    cout<<relativ_transformation_imu3<<endl;
+    cout<<rotation<<endl;
 
     //change interval matrix into Lidar coordinate
-//    IntervalMatrix imu_cam(3,3);
-//    IntervalMatrix cam_lidar(3,3);
-//    IntervalMatrix imu_cam_inverse(3,3);
-//    IntervalMatrix cam_lidar_inverse(3,3);
-//    IntervalMatrix erg_rot(3,3);
-//    Eigen::Matrix4d temp1;
-//    Eigen::Matrix4d temp2;
-//    temp1=transform3.inverse();
-//    temp2=transform2.inverse();
-//    for(int i=0;i<3;i++)
-//    {
-//        for(int j=0;j<3;j++)
-//        {
-//            imu_cam[i][j]=transform3(i,j);
-//        }
-//    }
-//    for(int i=0;i<3;i++)
-//    {
-//        for(int j=0;j<3;j++)
-//        {
-//            cam_lidar[i][j]=transform2(i,j);
-//        }
-//    }
-//    for(int i=0;i<3;i++)
-//    {
-//        for(int j=0;j<3;j++)
-//        {
-//            imu_cam_inverse[i][j]=temp1(i,j);
-//        }
-//    }
-//    for(int i=0;i<3;i++)
-//    {
-//        for(int j=0;j<3;j++)
-//        {
-//            cam_lidar_inverse[i][j]=temp2(i,j);
-//        }
-//    }
-//    erg_rot=(imu_cam*cam_lidar)*rotation*(imu_cam_inverse*cam_lidar_inverse);
-//
 
     IntervalVector t1= IntervalrotationMatrixtoEulerAngle(rotation);
-    cout<<t1<<endl;
     Eigen::Matrix3d r=relativ_transformation_imu2.block(0,0,3,3);
     Eigen::Vector3d ro=rotationMatrixtoEulerAngle(r);
-    cout<<ro<<endl;
     Eigen::Vector3d ta;
+
     ta[0]=relativ_transformation_imu2(0,3);
     ta[1]=relativ_transformation_imu2(1,3);
     ta[2]=relativ_transformation_imu2(2,3);
-    cout<<ro<<endl;
-    cout<<ta<<endl;
-    erg.emplace_back(ro);
-    erg.emplace_back(ta);
-    return erg;
+    ground_truth.emplace_back(make_pair(ro,ta));
+    measurement.tf2imu.clear();
 }
 Eigen::Vector3d Particle_Filter::rotationMatrixtoEulerAngle(Eigen::Matrix3d & matrix)
 {
@@ -1022,12 +1033,10 @@ void Particle_Filter::show_all(int argc, char ** argv, LiDAR_PointCloud &pointcl
     pointcloud_show(argc, argv);
 
 }
-void Particle_Filter::validate_result(Parameters &parameters, Measurement &measurement, IMU &imu)
-{
-    vector<Eigen::Vector3d> temp=get_ground_truth(parameters,measurement,imu);
-}
 void Particle_Filter::particle_filter_parallelism(Parameters &parameters, LiDAR_PointCloud &pointcloud, int particle_index)
 {
+    non_ground_weight=parameters.get_particle_non_ground_weight();
+    ground_weight=parameters.get_particle_ground_weight();
     int point_cloud_size=pointcloud.pointclouds[current_index_second].second.points.size();
     transform_use_particle(pointcloud.pointclouds[current_index_second].second,particle[particle_index].first, particle[particle_index].second);
     pcl::PointCloud<pcl::PointXYZI> temp;
@@ -1073,54 +1082,29 @@ void Particle_Filter::particle_filter_do(Parameters &parameters,IMU &imu, KdTree
     //pcl::PointCloud<pcl::PointXYZ> transform_last_use_particle_calculated;
     //6 Dimension transformation IntervalVector
     //DEBUG move out
-    box_6D=create_6D_box(imu,pointcloud);
+    //box_6D=create_6D_box(imu,pointcloud,measurement);
     //use end_time to build KD-Tree
-
     tree_after_transform.setInputCloud(pointcloud.pointclouds[current_index_first].second.makeShared());
     pointxyz2pointxyzi(pointcloud.pointclouds[current_index_first].second.makeShared(),temp_matched);
     get_label(temp_matched,label_matched);
      build_LiDAR_Interval(parameters,pointcloud);
-    iteration_first= false;
     //DEBUG move out
-    particle=generate_particle(box_6D,2,4,4,5,5 ,2);//233332 //345552    //234772
-
+    //particle=generate_particle(box_6D,2,4,4,5,5 ,2);//233332 //345552    //234772
     vector<double> distance;
     int particle_size=particle.size();
-
-
-
-    //Eigen::Quaterniond ground_truth_q;
-    //Eigen::Quaterniond particle_q;
-    //ground_truth_q = Eigen::AngleAxisd(ground_truth[0][0], Eigen::Vector3d::UnitX())
-      //  * Eigen::AngleAxisd(ground_truth[0][1], Eigen::Vector3d::UnitY())
-      //  * Eigen::AngleAxisd(ground_truth[0][2], Eigen::Vector3d::UnitZ());
-      cout<<pointclouds_Interval[0].second.size()<<endl;
+    cout<<pointclouds_Interval[0].second.size()<<endl;
     cout<<pointclouds_Interval[1].second.size()<<endl;
     for(int j=0;j<particle_size;j++)
     {
-//        particle[j].first[0]=0.000382884;
-//        particle[j].first[1]=-0.00263797;
-//        particle[j].first[2]=0.000812318;
-//        particle[j].second[0]=0.666589;
-//        particle[j].second[1]=-0.0114437;
-//        particle[j].second[2]=0.0253394;
-
-//        particle[j].first[0]=0.000214591;
-//        particle[j].first[1]=-0.00196578;
-//        particle[j].first[2]=0.00183769;
-//        particle[j].second[0]=0.665967;
-//        particle[j].second[1]=-0.0112806;
-//        particle[j].second[2]=0.028229;
+//        particle[j].first[0]=-0.00108146;
+//        particle[j].first[1]=0.000829525;
+//        particle[j].first[2]=0.000971853;
+//        particle[j].second[0]=1.28915;
+//        particle[j].second[1]=-0.0184414;
+//        particle[j].second[2]=0.0422609;
         particle_filter_parallelism(parameters,pointcloud,j);
         //DEBUG
         //show_all(argc,argv,pointcloud);
-        //validate_result(parameters,measurement,imu);
-        //particle_q = Eigen::AngleAxisd(particle[j].first[0], Eigen::Vector3d::UnitX())
-        //                 * Eigen::AngleAxisd(particle[j].first[1], Eigen::Vector3d::UnitY())
-         //                * Eigen::AngleAxisd(particle[j].first[2], Eigen::Vector3d::UnitZ());
-        //double dis_translation=sqrt(pow(particle[j].second[0]-ground_truth[1][0],2)+pow(particle[j].second[1]-ground_truth[1][1],2)+pow(particle[j].second[2]-ground_truth[1][2],2));
-        //double dis_rotation=ground_truth_q.angularDistance(particle_q);
-        //double dis=dis_rotation+dis_translation;
         debug_sums.emplace_back(summe);
         //DEBUG
         sums.emplace_back(particle_weighted(j,summe));
@@ -1140,7 +1124,6 @@ void Particle_Filter::particle_filter_do(Parameters &parameters,IMU &imu, KdTree
         summe=0;
     }
     //DEBUG
-
     gesamte_sums=calcualte_gesamte_sums();
     calcualte_normalized_sums(gesamte_sums);
     //sort
@@ -1153,18 +1136,8 @@ void Particle_Filter::particle_filter_do(Parameters &parameters,IMU &imu, KdTree
     sums.clear();
     resample_weight.clear();
     transform_last_use_particle.points.clear();
-    transform_last_use_particle_calculated.points.clear();
 }
-void Particle_Filter::transform_use_particle_calculated(pcl::PointCloud<pcl::PointXYZ> &pointcloud, Eigen::Vector3d &angle, Eigen::Vector3d &translation)
-{
-    transform_last_use_particle_calculated.header.stamp=pointcloud.header.stamp;
-    transformationsmatrix.block(0,0,3,3)=eulerAnglesToRotationMatrix(angle);
-    transformationsmatrix(0,3)=translation[0];
-    transformationsmatrix(1,3)=translation[1];
-    transformationsmatrix(2,3)=translation[2];
-    transformationsmatrix.inverse();
-    pcl::transformPointCloud(pointcloud,transform_last_use_particle_calculated,transformationsmatrix);
-}
+
 double Particle_Filter::calcualte_gesamte_sums()
 {
     double gesamt_sum=0;
@@ -1241,7 +1214,7 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::generate_particle
     Eigen::Vector3d temp1;
     Eigen::Vector3d temp2;
     temp1=rotation;
-    Eigen::Vector3d truth_translation= ground_truth[1];
+    Eigen::Vector3d truth_translation= ground_truth.back().second;
 //    double schritt_x=box_6d[3].diam()/num3;
 //    double schritt_y=box_6d[4].diam()/num4;
 //    double schritt_z=box_6d[5].diam()/num5;
@@ -1289,35 +1262,34 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::generate_particle
 //       temp2[2]=truth_translation[2];
 //       erg.emplace_back(make_pair(temp1,temp2));
            temp2[0]=(truth_translation[0]-schritt_x*(half_x-1))+i*schritt_x;
-           temp2[1]=(truth_translation[1]-schritt_y*(half_y-1))+i*schritt_y;
-           temp2[2]=(truth_translation[2]-schritt_z*(half_z-1))+i*schritt_z;
+           temp2[1]=truth_translation[1];
+           temp2[2]=truth_translation[2];
            erg.emplace_back(make_pair(temp1,temp2));
    }
    //create particle for y direction
-//    for(int i=0;i<num4;i++)
-//    {
+    for(int i=0;i<num4;i++)
+    {
+        temp2[0]=truth_translation[0];
+        temp2[1]=(truth_translation[1]-schritt_y*(half_y-1))+i*schritt_y;
+        temp2[2]=truth_translation[2];
+        erg.emplace_back(make_pair(temp1,temp2));
 //        temp2[0]=truth_translation[0];
-//        temp2[1]=(truth_translation[1]-schritt_y*(half_y-1))+i*schritt_y;
+//        temp2[1]=truth_translation[1]-i*schritt_y;
 //        temp2[2]=truth_translation[2];
 //        erg.emplace_back(make_pair(temp1,temp2));
-////        temp2[0]=truth_translation[0];
-////        temp2[1]=truth_translation[1]-i*schritt_y;
-////        temp2[2]=truth_translation[2];
-////        erg.emplace_back(make_pair(temp1,temp2));
-//    }
-//    //create particle for z direction
-//    for(int i=0;i<num5;i++)
-//    {
+    }
+    //create particle for z direction
+    for(int i=0;i<num5;i++)
+    {
+        temp2[0]=truth_translation[0];
+        temp2[1]=truth_translation[1];
+        temp2[2]=(truth_translation[2]-schritt_z*(half_z-1))+i*schritt_z;
+        erg.emplace_back(make_pair(temp1,temp2));
 //        temp2[0]=truth_translation[0];
 //        temp2[1]=truth_translation[1];
-//        temp2[2]=(truth_translation[2]-schritt_z*(half_z-1))+i*schritt_z;
+//        temp2[2]=truth_translation[2]-i*schritt_z;
 //        erg.emplace_back(make_pair(temp1,temp2));
-////        temp2[0]=truth_translation[0];
-////        temp2[1]=truth_translation[1];
-////        temp2[2]=truth_translation[2]-i*schritt_z;
-////        erg.emplace_back(make_pair(temp1,temp2));
-//    }
-    cout<<erg.size()<<endl;
+    }
     return erg;
 }
 vector<Eigen::Vector3d> Particle_Filter::generate_particle_rotation(IntervalVector box_6d,int num0, int num1, int num2)
@@ -1333,23 +1305,23 @@ vector<Eigen::Vector3d> Particle_Filter::generate_particle_rotation(IntervalVect
     double d3=(box_6d[2].ub()-box_6d[2].lb())/num2;
 
     for(int i=0;i<num0;i++) {
-        temp1[0]=ground_truth[0][0]+i*d1*50;
-        temp1[1]=ground_truth[0][1];
-        temp1[2]=ground_truth[0][2];
+        temp1[0]=ground_truth.back().first[0]+i*d1*5;
+        temp1[1]=ground_truth.back().first[1];
+        temp1[2]=ground_truth.back().first[2];
         erg1.emplace_back(temp1);
     }
     //erg1=particle_sort(erg1);
     for(int j=0;j<num1;j++) {
-        temp1[0]=ground_truth[0][0];
-        temp1[1]=ground_truth[0][1]+j*d2*50;
-        temp1[2]=ground_truth[0][2];
+        temp1[0]=ground_truth.back().first[0];
+        temp1[1]=ground_truth.back().first[1]+j*d2*5;
+        temp1[2]=ground_truth.back().first[2];
         erg2.emplace_back(temp1);
     }
     //erg2=particle_sort(erg2);
     for(int k=0;k<num2;k++) {
-        temp1[0]=ground_truth[0][0];
-        temp1[1]=ground_truth[0][1];
-        temp1[2]=ground_truth[0][2]+k*d3*50;
+        temp1[0]=ground_truth.back().first[0];
+        temp1[1]=ground_truth.back().first[1];
+        temp1[2]=ground_truth.back().first[2]+k*d3*5;
         erg3.emplace_back(temp1);
     }
     //erg3=particle_sort(erg3);
@@ -1397,70 +1369,73 @@ double Particle_Filter::calculate_angular_distance(Eigen::Vector3d item)
     Eigen::Quaterniond p = Eigen::AngleAxisd(item[0], Eigen::Vector3d::UnitX())
                      * Eigen::AngleAxisd(item[1], Eigen::Vector3d::UnitY())
                      * Eigen::AngleAxisd(item[2], Eigen::Vector3d::UnitZ());
-    Eigen::Quaterniond ground_truth_q = Eigen::AngleAxisd(ground_truth[0][0], Eigen::Vector3d::UnitX())
-                                        * Eigen::AngleAxisd(ground_truth[0][1], Eigen::Vector3d::UnitY())
-                                        * Eigen::AngleAxisd(ground_truth[0][2], Eigen::Vector3d::UnitZ());
+    Eigen::Quaterniond ground_truth_q = Eigen::AngleAxisd(ground_truth.back().first[0], Eigen::Vector3d::UnitX())
+                                        * Eigen::AngleAxisd(ground_truth.back().first[1], Eigen::Vector3d::UnitY())
+                                        * Eigen::AngleAxisd(ground_truth.back().first[2], Eigen::Vector3d::UnitZ());
     return p.angularDistance(ground_truth_q);
 }
-//void Particle_Filter::create_pic(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,Measurement &measurement,int argc, char ** argv)
-//{
-//    int index=0;
-//    vector<pair<Eigen::Vector3d,Eigen::Vector3d>> particle_temp;
-//    get_start_end_cloud_index(pointcloud,parameters,start_index, end_index);
-//    for(int i=1;i<10;i++)
-//    {
-//        //2 pointclouds - 10 pointclouds
-//        current_index_first=start_index;
-//        current_index_second=current_index_first+1;
-//        start_time=pointcloud.pointclouds[current_index_first].first;
-//        end_time=pointcloud.pointclouds[current_index_second].first;
-//        box_6D=create_6D_box(imu,pointcloud);
-//        ground_truth=get_ground_truth(parameters,measurement,imu);
-//        //plot translation with truth rotation
-//        vector<pair<Eigen::Vector3d,Eigen::Vector3d>> translation_particle;
-//        //generate rotation
-//        vector<Eigen::Vector3d> rotation_particle=generate_particle_rotation(box_6D,10,10,10);
-//
-//        for(int j=0;j<rotation_particle.size();j++)
-//        {
-//            translation_particle=generate_particle_translation(box_6D,rotation_particle[j],20,20 ,20);
-//            particle.insert(particle.end(),translation_particle.begin(),translation_particle.end());
-//            translation_particle.clear();
+void Particle_Filter::create_pic(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,Measurement &measurement,int argc, char ** argv)
+{
+    int index=0;
+    vector<pair<Eigen::Vector3d,Eigen::Vector3d>> particle_temp;
+    get_start_end_cloud_index(pointcloud,parameters,start_index, end_index);
+    for(int i=1;i<10;i++)
+    {
+        //2 pointclouds - 10 pointclouds
+        current_index_first=start_index;
+        current_index_second=current_index_first+1;
+        start_time=pointcloud.pointclouds[current_index_first].first;
+        end_time=pointcloud.pointclouds[current_index_second].first;
+        box_6D=create_6D_box(imu,pointcloud,measurement);
+        get_ground_truth(parameters,measurement,imu);
+        //plot translation with truth rotation
+        vector<pair<Eigen::Vector3d,Eigen::Vector3d>> translation_particle;
+        //generate rotation
+        vector<Eigen::Vector3d> rotation_particle=generate_particle_rotation(box_6D,10,10,10);
+
+        for(int j=0;j<rotation_particle.size();j++)
+        {
+            translation_particle=generate_particle_translation(box_6D,rotation_particle[j],20,20 ,20);
+            particle.insert(particle.end(),translation_particle.begin(),translation_particle.end());
+            translation_particle.clear();
+        }
+        cout<<particle.size()<<endl;
+
+        particle_filter_do(parameters,imu,kd,pointcloud,measurement,argc,argv);
+        plot_debug();
+
+
+//        while(index<particle_temp.size()) {
+//            for (int i = index; i < particle_temp.size(); i++) {
+//                particle.emplace_back(particle_temp[i]);
+//                if ((i + 1) % 149 == 0)    //343
+//                {
+//                    index = i + 1;
+//                    break;
+//                }
+//            }
 //        }
-//
-//        particle_filter_do(parameters,imu,kd,pointcloud,measurement,argc,argv);
-//        plot_debug();
-//
-//
-////        while(index<particle_temp.size()) {
-////            for (int i = index; i < particle_temp.size(); i++) {
-////                particle.emplace_back(particle_temp[i]);
-////                if ((i + 1) % 149 == 0)    //343
-////                {
-////                    index = i + 1;
-////                    break;
-////                }
-////            }
-////        }
-//    }
-//
-//
-//
-//
-//}
+    }
+
+
+
+
+}
 vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_set_up(Parameters &parameters,IMU &imu, KdTree & kd,  LiDAR_PointCloud &pointcloud ,Measurement &measurement,int argc, char ** argv){
     int rounds=0;
     int index=0;
+    calculate_interval=parameters.get_calculate_interval();
     pointclouds_Interval.resize(2);
-    //create_pic(parameters,imu,kd,pointcloud,measurement,argc,argv);
+    create_pic(parameters,imu,kd,pointcloud,measurement,argc,argv);
     get_start_end_cloud_index(pointcloud,parameters,start_index, end_index);
     cout<<start_index<<endl;
     cout<<end_index<<endl;
+
     current_index_first=start_index;
-    current_index_second=current_index_first+parameters.get_calculate_interval();
-    //TODO change into interval
-    for(;current_index_first!=end_index;current_index_first++,current_index_second++)
+    current_index_second=current_index_first+calculate_interval;
+    for(;current_index_second<=end_index;)
     {
+        //cout<<index++<<endl;
         start_time=pointcloud.pointclouds[current_index_first].first;
         end_time=pointcloud.pointclouds[current_index_second].first;
         //box_6D=create_6D_box(imu,pointcloud);
@@ -1489,213 +1464,230 @@ vector<pair<Eigen::Vector3d,Eigen::Vector3d>> Particle_Filter::particle_filter_s
 //            pointclouds_Interval[1].second.clear();
 //        }
         //plot_debug();
-        ground_truth=get_ground_truth(parameters,measurement,imu);
+        get_ground_truth(parameters,measurement,imu);
         particle_filter_do(parameters,imu,kd,pointcloud,measurement,argc,argv);
-
         particle.clear();
         pointclouds_Interval[0].second.clear();
         pointclouds_Interval[1].second.clear();
+        current_index_first=current_index_first+calculate_interval;
+        current_index_second=current_index_second+calculate_interval;
+    }
+    //show();
+    show_path(argc,argv);
+}
+void Particle_Filter::show()
+{
+    show_error();
+}
+void Particle_Filter::show_error()
+{
+    vector<int> sequence;
+    vector<double> dis;
+    double ddd;
+    for(int i=0;i<ground_truth.size();i++)
+    {
+        sequence.emplace_back(i+1);
+        ddd=sqrt(pow(ground_truth[i].second[0]-result[i].second[0],2));
+        dis.emplace_back(ddd);
+    }
+    matplotlibcpp::figure_size(1200, 780);
+    matplotlibcpp::scatter(sequence,dis);
+    matplotlibcpp::xlim(0, 15);
+    matplotlibcpp::title("Translation-comparision of particle filter output and ground-truth in x direction");
+    // Save the image (file format is determined by the extension)
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/error_x.png");
+    //sequence.clear();
+    dis.clear();
+    //y
+
+    for(int i=0;i<ground_truth.size();i++)
+    {
+        //sequence.emplace_back(i+1);
+        ddd=sqrt(pow(ground_truth[i].second[1]-result[i].second[1],2));
+        dis.emplace_back(ddd);
+    }
+    matplotlibcpp::figure_size(1200, 780);
+    matplotlibcpp::scatter(sequence,dis);
+    matplotlibcpp::xlim(0, 20);
+    matplotlibcpp::title("Translation-comparision of particle filter output and ground-truth in y direction");
+    // Save the image (file format is determined by the extension)
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/error_y.png");
+    //sequence.clear();
+    dis.clear();
+    //z
+    for(int i=0;i<ground_truth.size();i++)
+    {
+        //sequence.emplace_back(i+1);
+        ddd=sqrt(pow(ground_truth[i].second[2]-result[i].second[2],2));
+        dis.emplace_back(ddd);
+    }
+    matplotlibcpp::figure_size(1200, 780);
+    matplotlibcpp::scatter(sequence,dis);
+    matplotlibcpp::xlim(0, 20);
+    matplotlibcpp::title("Translation-comparision of particle filter output and ground-truth in z direction");
+    // Save the image (file format is determined by the extension)
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/error_z.png");
+    //sequence.clear();
+    dis.clear();
+
+    //roll
+    for(int i=0;i<ground_truth.size();i++)
+    {
+        //sequence.emplace_back(i+1);
+        ddd=sqrt(pow(ground_truth[i].first[0]-result[i].first[0],2));
+        dis.emplace_back(ddd);
+    }
+    matplotlibcpp::figure_size(1200, 780);
+    matplotlibcpp::scatter(sequence,dis);
+    matplotlibcpp::xlim(0, 20);
+    matplotlibcpp::title("Rotation-comparision of particle filter output and ground-truth in roll direction");
+    // Save the image (file format is determined by the extension)
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/error_roll.png");
+    //sequence.clear();
+    dis.clear();
+    //pitch
+    for(int i=0;i<ground_truth.size();i++)
+    {
+        //sequence.emplace_back(i+1);
+        ddd=sqrt(pow(ground_truth[i].first[1]-result[i].first[1],2));
+        dis.emplace_back(ddd);
+    }
+    matplotlibcpp::figure_size(1200, 780);
+    matplotlibcpp::scatter(sequence,dis);
+    matplotlibcpp::xlim(0, 20);
+    matplotlibcpp::title("Rotation-comparision of particle filter output and ground-truth in pitch direction");
+    // Save the image (file format is determined by the extension)
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/error_pitch.png");
+    //sequence.clear();
+    dis.clear();
+//yaw
+    for(int i=0;i<ground_truth.size();i++)
+    {
+        //sequence.emplace_back(i+1);
+        ddd=sqrt(pow(ground_truth[i].first[2]-result[i].first[2],2));
+        dis.emplace_back(ddd);
+    }
+    matplotlibcpp::figure_size(1200, 780);
+    matplotlibcpp::scatter(sequence,dis);
+    matplotlibcpp::xlim(0, 20);
+    matplotlibcpp::title("Rotation-comparision of particle filter output and ground-truth in yaw direction");
+    // Save the image (file format is determined by the extension)
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/error_yaw.png");
+    //sequence.clear();
+    dis.clear();
+
+    //distance
+    for(int i=0;i<ground_truth.size();i++)
+    {
+        //sequence.emplace_back(i+1);
+        ddd=sqrt(pow(ground_truth[i].second[0]-result[i].second[0],2)+pow(ground_truth[i].second[1]-result[i].second[1],2)+pow(ground_truth[i].second[2]-result[i].second[2],2));
+        dis.emplace_back(ddd);
+    }
+    matplotlibcpp::figure_size(1200, 780);
+    matplotlibcpp::scatter(sequence,dis);
+    matplotlibcpp::xlim(0, 20);
+    matplotlibcpp::title("Translation-comparision of particle filter output and ground-truth");
+    // Save the image (file format is determined by the extension)
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/error_t.png");
+   // sequence.clear();
+    dis.clear();
+    //rotation distance
+    for(int i=0;i<ground_truth.size();i++)
+    {
+        Eigen::Quaterniond p = Eigen::AngleAxisd(result[i].first[0], Eigen::Vector3d::UnitX())
+                               * Eigen::AngleAxisd(result[i].first[1], Eigen::Vector3d::UnitY())
+                               * Eigen::AngleAxisd(result[i].first[2], Eigen::Vector3d::UnitZ());
+        Eigen::Quaterniond ground_truth_q = Eigen::AngleAxisd(ground_truth[i].first[0], Eigen::Vector3d::UnitX())
+                                            * Eigen::AngleAxisd(ground_truth[i].first[1], Eigen::Vector3d::UnitY())
+                                            * Eigen::AngleAxisd(ground_truth[i].first[2], Eigen::Vector3d::UnitZ());
+        ddd=p.angularDistance(ground_truth_q);
+        //sequence.emplace_back(i+1);
+        dis.emplace_back(ddd);
+    }
+    matplotlibcpp::figure_size(1200, 780);
+    matplotlibcpp::scatter(sequence,dis);
+    matplotlibcpp::xlim(0, 20);
+    matplotlibcpp::title("Rotation-comparision of particle filter output and ground-truth");
+    // Save the image (file format is determined by the extension)
+    matplotlibcpp::save("/home/jeffqjn/Desktop/result/error_r.png");
+    sequence.clear();
+    dis.clear();
+}
+void pose_initialize(geometry_msgs::PoseStamped  &temp)
+{
+    temp.pose.position.x=0;
+    temp.pose.position.y=0;
+    temp.pose.position.z=0;
+
+    temp.pose.orientation.x=0;
+    temp.pose.orientation.y=0;
+    temp.pose.orientation.z=0;
+    temp.pose.orientation.w=-1;
+}
+void Particle_Filter::show_path(int argc, char** argv) {
+    Eigen::Matrix4d result_temp;
+    //process the data
+    for(int i=0;i<result.size();i++)
+    {
+        Eigen::Quaterniond p = Eigen::AngleAxisd(result[i].first[0], Eigen::Vector3d::UnitX())
+                               * Eigen::AngleAxisd(result[i].first[1], Eigen::Vector3d::UnitY())
+                               * Eigen::AngleAxisd(result[i].first[2], Eigen::Vector3d::UnitZ());
+        Eigen::Matrix3d temp= p.matrix();
+        result_temp.block(0,0,3,3)=temp;
+        result_temp(0,3)=result[i].second[0];
+        result_temp(1,3)=result[i].second[1];
+        result_temp(2,3)=result[i].second[2];
+        result_temp(3,0)=0;
+        result_temp(3,1)=0;
+        result_temp(3,2)=0;
+        result_temp(3,3)=1;
+
+        result_matrix.emplace_back(result_temp.inverse());
+
+    }
+    //calculate pose
+    nav_msgs::Path path;
+    geometry_msgs::PoseStamped temp;
+    Eigen::Matrix4d temp_m=Eigen::Matrix4d::Identity();
+    Eigen::Matrix3d temp_q;
+
+    int count = 1;
+    pose_initialize(temp);
+    while (count <= result_matrix.size()) {
+        for (int i = 0; i < count; i++) {
+            temp_m=result_matrix[i]*temp_m;
+        }
+        temp_q=temp_m.block(0,0,3,3);
+        Eigen::Quaterniond temp_qq(temp_q);
+        temp.pose.orientation.x=temp_qq.x();
+        temp.pose.orientation.y=temp_qq.y();
+        temp.pose.orientation.z=temp_qq.z();
+        temp.pose.orientation.w=temp_qq.w();
+
+        temp.pose.position.x=temp_m(0,3);
+        temp.pose.position.y=temp_m(1,3);
+        temp.pose.position.z=temp_m(2,3);
+
+        path.poses.emplace_back(temp);
+
+        count++;
     }
 
+    //show
+    ros::init(argc,argv,"Trajectoryshow");
+    ros::NodeHandle nh;
 
+    ros::Publisher path_pub=nh.advertise<nav_msgs::Path>("Trajectory_show",1);
+    path.header.frame_id="map";
+    ros::Rate loop_rate(1);
 
-
-
-    //DEBUG
-
-//    pcl::PointCloud<pcl::PointXYZ> estimation;
-//    vector<IntervalVector> estimation_interval;
-//
-//    Eigen::Quaterniond ground_truth;
-//    Eigen::Quaterniond particle_q;
-//    ground_truth = Eigen::AngleAxisd(-2.33287e-05, Eigen::Vector3d::UnitX())
-//        * Eigen::AngleAxisd(-0.000138494, Eigen::Vector3d::UnitY())
-//        * Eigen::AngleAxisd(-0.000794976, Eigen::Vector3d::UnitZ());
-
-
-
-
-//        Ground_Truth
-//        particle[j].first[0]=-2.33287e-05;
-//        particle[j].first[1]=-0.000138494;
-//        particle[j].first[2]=-0.000794976;
-//
-//        particle[j].second[0]=  -0.0623501;
-//        particle[j].second[1]= -0.00126607;
-//        particle[j].second[2]=  0.00118102;
-//2915
-//        particle[j].first[0]=0.000167698;
-//        particle[j].first[1]=-0.00018689;
-//        particle[j].first[2]=-0.000769856;
-//
-//        particle[j].second[0]=0.0390272;
-//        particle[j].second[1]=0.180604;
-//        particle[j].second[2]=  0;
-        //particle_q = Eigen::AngleAxisd(particle[j].first[0], Eigen::Vector3d::UnitX())
-        //               * Eigen::AngleAxisd(particle[j].first[1], Eigen::Vector3d::UnitY())
-        //               * Eigen::AngleAxisd(particle[j].first[2], Eigen::Vector3d::UnitZ());
-        //double dis_q= particle_q.angularDistance(ground_truth);
-        //double dis= sqrt( pow(particle[j].second[0]-(-0.0623501),2)+pow(particle[j].second[1]-(-0.00126607),2)+pow(particle[j].second[2]-(0.00118102),2));
-
-        //DEBUG
-        //show_pointcloud_original(argc,argv,pointcloud);
-
-
-
-
-        //DEBUG
-
-        //distance.emplace_back(sqrt(dis*dis+dis_q*dis_q));
-
-
-
-
-//    cout<<max_value<<endl;
-//    cout<<max_index<<endl;
-//    cout<<min_value<<endl;
-//    cout<<min_index<<endl;
-    //plot(distance,sums);
-
-//    double gesamt_sum=0;
-//    for(auto s : sums)
-//    {
-//        gesamt_sum+=s.weight;
-//    }
-//    //normalization
-//    //vector<double> sums_normal(sums.size());
-//
-//    for(int i=0;i<sums.size();i++)
-//    {
-//        sums[i].weight_normal=sums[i].weight/gesamt_sum;
-//
-//    }
-//    //sort
-//    sort(sums.begin(),sums.end(),GreaterSort);
-//    //resampling
-//    int particle_number=sums.size();
-//    vector<particle_weighted> resample_weight(sums.size(),particle_weighted(0,0));
-//    int np=0;
-//    int k=0;
-//
-//    for(int i=0;i<particle_number;i++)
-//    {
-//        np=round(sums[i].weight_normal*particle_number);
-//        for(int j=0;j<np;j++)
-//        {
-//            resample_weight[k++]=sums[i];
-//            if(k==particle_number)
-//            {
-//                goto out;
-//            }
-//        }
-//    }
-//    while (k < particle_number)
-//    {
-//        resample_weight[k++] = sums[0];
-//    }
-//    out:
-//
-//    //calculate average use first 15% points
-//    gesamt_sum=0;
-//    Eigen::Vector3d erg1;
-//    Eigen::Vector3d erg2;
-//    erg1[0]=0;
-//    erg1[1]=0;
-//    erg1[2]=0;
-//    erg2[0]=0;
-//    erg2[1]=0;
-//    erg2[2]=0;
-//    for(int i=0;i<particle_number*0.15;i++)
-//    {
-//        gesamt_sum+=resample_weight[i].weight_normal;
-//    }
-//    for(int i=0;i<particle_number*0.15;i++)
-//    {
-//        resample_weight[i].weight_normal=resample_weight[i].weight_normal/gesamt_sum;
-//    }
-//    for(int i=0;i<particle_number*0.15;i++)
-//    {
-//        erg1+=particle[resample_weight[i].particle_index].first*resample_weight[i].weight_normal;
-//        erg2+=particle[resample_weight[i].particle_index].second*resample_weight[i].weight_normal;
-//    }
-//    cout<<erg1<<endl;
-//    cout<<erg2<<endl;
-//    //ground_truth compare
-//    //GNSS integieren
-//    //Random choose
-//
-//
-//
-//
-//    //resampling
-//    int null_count=0;
-//    for(int i=0;i<weights.size();i++)
-//    {
-//        if(weights[i].weight<parameters.get_PF_threshold())
-//        {
-//            weights[i].weight=-1;
-//            null_count++;
-//        }
-//    }
-//
-////    for(int i=0;i<weights.size();i++)
-////    {
-////       if(weights[i].weight==-1)
-////       {
-////           weights[i].weight=weights[select[s++%10]].weight;
-////           weights[i].index=weights[select[s++%10]].index;
-////       }
-////    }
-////    //get average
-////    Eigen::Vector3d translation;
-////    Eigen::Vector3d rotation;
-////    translation[0]=0;
-////    translation[1]=0;
-////    translation[2]=0;
-////    rotation[0]=0;
-////    rotation[1]=0;
-////    rotation[2]=0;
-////    for(auto item:weights)
-////    {
-////        translation+=particle[item.index].second;
-////        rotation+=particle[item.index].first;
-////    }
-////    translation=translation/weights.size();
-////    rotation=rotation/weights.size();
-////    cout<<translation<<endl;
-////    cout<<rotation<<endl;
-//
-//    end= curTime();
-//    cout<<particle[max_index].first<<endl;
-//    cout<<particle[max_index].second<<endl;
-//    cout<<max_value<<endl;
-//    cout<<end-start<<endl;
-//    //plot(distance,sums);
-//    //pcl::PointCloud<pcl::PointXYZ> transformed;
-//    //transform_use_particle(pointcloud.pointclouds[0].second,particle[max_index].first,particle[max_index].second,transformed);
-//    //show_pointcloud( argc,  argv,transformed,pointcloud.pointclouds[1].second );
-//
-//    //Weight Normalization
-//    vector<pair<Eigen::Vector3d,Eigen::Vector3d>> result;
-//    result.emplace_back(make_pair(particle[max_index].first,particle[max_index].second));
-//    transform_use_particle(pointcloud.pointclouds[0].second,result[0].first,result[0].second);
-//    transform_use_particle_Interval(pointcloud.pointclouds_Interval[0].second,result[0].first,result[0].second,estimation_interval);
-//    pcl::PointCloud<pcl::PointXYZ> erg;
-//    erg.header.stamp=pointcloud.pointclouds[1].first;
-//    for( auto item : estimation)
-//    {
-//        erg.points.emplace_back(item);
-//    }
-//    pointcloud.pointclouds.emplace_back(make_pair(pointcloud.pointclouds[1].first,erg));
-//    pointcloud.pointclouds_Interval.emplace_back(make_pair(pointcloud.pointclouds_Interval[1].first,estimation_interval));
-//    pointcloud.pointclouds.erase(pointcloud.pointclouds.begin());
-//    pointcloud.pointclouds.erase(pointcloud.pointclouds.begin());
-//    pointcloud.pointclouds_Interval.erase(pointcloud.pointclouds_Interval.begin());
-//    pointcloud.pointclouds_Interval.erase(pointcloud.pointclouds_Interval.begin());
-//    imu.vel_data.erase(imu.vel_data.begin(),imu.vel_data.end()-2);
-//    return result;
+    while(ros::ok())
+    {
+        path_pub.publish(path);
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
 }
-
 void Particle_Filter::update_max(double s, int index)
 {
     if(s>max_value)
@@ -1846,7 +1838,7 @@ Eigen::Matrix3d Particle_Filter::eulerAnglesToRotationMatrix(Eigen::Vector3d &th
 
 }
 
-IntervalVector Particle_Filter::create_6D_box(IMU imu, LiDAR_PointCloud pointcloud)
+IntervalVector Particle_Filter::create_6D_box(IMU imu, LiDAR_PointCloud pointcloud,Measurement measurement)
 {
     double start_compute_time=pointcloud.pointclouds[current_index_first].first;
     double end_compute_time=pointcloud.pointclouds[current_index_second].first;
@@ -1856,15 +1848,60 @@ IntervalVector Particle_Filter::create_6D_box(IMU imu, LiDAR_PointCloud pointclo
     Interval velocity_interval_xy(-4.16,13.8);
     Interval velocity_interval_z(-2.,2.);
     rotation=imu.vel2rotatation(start_compute_time,end_compute_time);
-    Euler_Angle=IntervalrotationMatrixtoEulerAngle(rotation);
-
-    box_6D[3]=velocity_interval_xy*(end_compute_time-start_compute_time);
-    box_6D[4]=velocity_interval_xy*(end_compute_time-start_compute_time);
-    box_6D[5]=velocity_interval_z*(end_compute_time-start_compute_time);
+    IntervalMatrix rotation_velodyne(3,3);
+    IntervalMatrix left(3,3);
+    IntervalMatrix right(3,3);
+    Eigen::Matrix3d left_temp;
+    Eigen::Matrix3d right_temp;
+    Eigen::Matrix4d temp1;
+    Eigen::Matrix4d temp2;
+    Eigen::Matrix4d transform2= measurement.tf_cam_velodyne();
+    Eigen::Matrix4d transform3= measurement.tf_cam_imu();
+    temp1=transform2.inverse()*transform3;
+    temp2=temp1.inverse();
+    for(int i=0;i<3;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            left[i][j]=temp1(i,j);
+        }
+    }
+    for(int i=0;i<3;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            right[i][j]=temp2(i,j);
+        }
+    }
+    rotation_velodyne=left*rotation*right;
+    Euler_Angle=IntervalrotationMatrixtoEulerAngle(rotation_velodyne);
+    //if(particle_filter_first) {
+        box_6D[3] = velocity_interval_xy * (end_compute_time - start_compute_time);
+        box_6D[4] = velocity_interval_xy * (end_compute_time - start_compute_time);
+        box_6D[5] = velocity_interval_z * (end_compute_time - start_compute_time);
+       // particle_filter_first=false;
+   // }
+//    else
+//    {
+//        IntervalVector temp=speed_prediction();
+//        box_6D[3] = temp[0]* (end_compute_time - start_compute_time);
+//        box_6D[4] = temp[1]* (end_compute_time - start_compute_time);
+//        box_6D[5] = temp[2]* (end_compute_time - start_compute_time);
+//    }
     box_6D[0]=Euler_Angle[0];
     box_6D[1]=Euler_Angle[1];
     box_6D[2]=Euler_Angle[2];
     return box_6D;
+}
+
+IntervalVector Particle_Filter::speed_prediction()
+{
+    IntervalVector v(3);
+    v[0]=result.back().second[0]/(calculate_interval*0.1);
+    v[1]=result.back().second[1]/(calculate_interval*0.1);
+    v[2]=result.back().second[2]/(calculate_interval*0.1);
+    v.inflate(3);
+    return v;
 }
 //TODO maybe through volume
 double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<int> &indices, vector<bool> &if_matched, IntervalVector & point_after_transform,int k, std::mutex* mutex)
@@ -1883,7 +1920,7 @@ double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<in
             if (x && y && z /*&& !if_matched[indices[i]]&&(intersect_volume>=volume/8)*/) {
                 if(label_transformed[k]==1 && label_matched[indices[i]]==1)
                 {
-                    s=s+0;
+                    s=s+ground_weight;
                     pcl::PointXYZRGB temp;
                     temp.x=transform_last_use_particle.points[k].x;
                     temp.y=transform_last_use_particle.points[k].y;
@@ -1901,7 +1938,7 @@ double Particle_Filter::calculate_weight(LiDAR_PointCloud &pointcloud, vector<in
                 }
                 else if(label_transformed[k]==0 && label_matched[indices[i]]==0)
                 {
-                    s=s+1;
+                    s=s+non_ground_weight;
                     pcl::PointXYZRGB temp;
                     temp.x=transform_last_use_particle.points[k].x;
                     temp.y=transform_last_use_particle.points[k].y;

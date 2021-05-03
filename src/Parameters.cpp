@@ -42,6 +42,15 @@ void Parameters::set_calcluate_interval(int interval)
 {
     this->calculate_interval=interval;
 }
+void Parameters::set_particle_non_ground_weight(double w)
+{
+    this->non_ground_weight=w;
+}
+void Parameters::set_particle_ground_weight(double w)
+{
+    this->ground_weight=w;
+}
+
 double Parameters::get_GYRO_SCALE_FACTOR()
 {
     return Parameters::GYRO_SCALE_FACTOR;
@@ -149,6 +158,14 @@ void Parameters::get_topics(vector<string> &t)
     {
         t.emplace_back(item);
     }
+}
+double Parameters::get_particle_non_ground_weight()
+{
+    return this->non_ground_weight;
+}
+double Parameters::get_particle_ground_weight()
+{
+    return this->ground_weight;
 }
 bool Parameters::if_in_time_period(rosbag::MessageInstance const  m)
 {

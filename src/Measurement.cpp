@@ -68,7 +68,6 @@ void Measurement::add_ground_truth(const geometry_msgs::PoseStampedConstPtr m, P
     double end_time= parameters.get_END_COMPUTE_TIME();
     bool contain=false;
     long double test;
-    test=m->header.stamp.toSec();
     if(ground_truth.empty())
     {
         ground_truth.emplace_back(make_pair(Interval(m->header.stamp.toSec()),*m));
@@ -184,7 +183,6 @@ Eigen::Matrix4d Measurement::calculate_relative_transformation_imu( double start
 
         translation_end=translation_end_index_last+alpha*(translation_end_index_current-translation_end_index_last);
         outcome = value_last.slerp(alpha, value_current);
-        //outcome = value_current.slerp(alpha, value_last);
         rotation_end=outcome.matrix();
         transformation_end.block(0,0,3,3)=rotation_end;
         transformation_end(0,3)=translation_end[0];
@@ -196,12 +194,10 @@ Eigen::Matrix4d Measurement::calculate_relative_transformation_imu( double start
         //rotation
         transformation_end=tf2imu[3].second;
     }
-    cout<<transformation_begin<<endl;
-
     //relativ_transformation=transformation_begin*transformation_end.inverse();
     //relativ_transformation=transformation_end.inverse()*transformation_begin;
     relativ_transformation=transformation_begin.inverse()*transformation_end;
-    cout<<relativ_transformation*transformation_end<<endl;
+    //relativ_transformation=transformation_end*transformation_begin.inverse();
     return relativ_transformation;
 }
 void Measurement::transform_gt_imu(Eigen::Matrix4d tf_mms_cam, Eigen::Matrix4d tf_cam_imu, double start_time,  double end_time) {

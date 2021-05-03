@@ -39,6 +39,10 @@ void load_from_config(Parameters & parameters)
     parameters.set_PF_threshold(config["particle_filter_threshold"].as<double>());
     //calculate interval
     parameters.set_calcluate_interval(config["particle_filter_calculate_interval"].as<int>());
+    //non_ground_weight
+    parameters.set_particle_non_ground_weight(config["particle_non_ground_weight"].as<double>());
+    //ground_weight
+    parameters.set_particle_ground_weight(config["particle_ground_weight"].as<double>());
 }
 
 

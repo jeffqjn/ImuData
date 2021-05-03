@@ -2,7 +2,7 @@
 // Created by noah on 18.01.21.
 //
 #include <IMU.h>
-IntervalMatrix IMU::vel2rotatation(long double start_compute_time, long double  end_compute_time)
+IntervalMatrix IMU::vel2rotatation( double start_compute_time,  double  end_compute_time)
 {
 //    Interval current_stamp;
 //    IntervalVector current_vel(3);
@@ -57,7 +57,7 @@ IntervalMatrix IMU::vel2rotatation(long double start_compute_time, long double  
     }
     //calculate delta t, whether the required time is between two stamps
     do {
-        delta_t=min(current_stamp.ub(),(double)end_compute_time)-max((double)start_compute_time,current_stamp.lb());
+        delta_t=min(current_stamp.ub(),end_compute_time)-max(start_compute_time,current_stamp.lb());
         IntervalMatrix Matrix_temp(3,3);
         Matrix_temp=calculate_rodrigues_rotation(current_vel,delta_t);
         Matrix_temp &=IntervalMatrix(3,3,Interval(-1,1));
@@ -67,7 +67,6 @@ IntervalMatrix IMU::vel2rotatation(long double start_compute_time, long double  
         current_stamp=this->vel_data[stamp_index].first;
         current_vel=this->vel_data[stamp_index].second;
     }while (current_stamp.lb()<end_compute_time);
-    //cout<<overall_rotation<<endl;
     overall_rotation &=IntervalMatrix(3,3,Interval(-1,1));
     return overall_rotation;
 }
@@ -608,7 +607,7 @@ IntervalMatrix IMU::calculate_rodrigues_rotation(IntervalVector angular_vel, dou
             term_a=Interval(term_a_lb,sin(theta.lb())/theta.lb());
         }
     }
-    double term_b_lb=2*(sin(theta.ub()/2)*sin(theta.ub()/2))/(theta.ub()*theta.ub());
+    double term_b_lb=(2*(sin(theta.ub()/2)*sin(theta.ub()/2)))/(theta.ub()*theta.ub());
     //Situation 1 when the lb of term a greater then the maximal feasible vaule
     if(term_b_lb>=0.5)
     {
